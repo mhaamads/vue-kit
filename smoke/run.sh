@@ -14,4 +14,10 @@ npm install --no-save --no-package-lock --no-audit --no-fund ../moonlinetravel-v
 npx vue-tsc --noEmit
 npx vitest run
 npx vite build --logLevel warn
+
+# Tailwind found the kit's classes through theme.css's own @source, and the app's token override won.
+css=$(cat dist/assets/*.css)
+for needle in "from-primary-orange-500" "z-toasts" "#0a7d3e" "data-theme=dark"; do
+  case "$css" in *"$needle"*) ;; *) echo "smoke: built CSS is missing $needle"; exit 1 ;; esac
+done
 echo "smoke: OK"

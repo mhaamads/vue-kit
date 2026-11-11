@@ -29,6 +29,7 @@ npm run type-check   # vue-tsc --build (app, tests, node configs)
 npm run lint         # eslint . (includes the library import boundary)
 npm test             # vitest run; tests import only @moonlinetravel/vue-kit/* (aliased to src)
 npm run smoke        # build → npm pack → install tarball in smoke/fixture → vue-tsc + vitest + vite build
+node scripts/gen-icon-names.mjs  # regenerate src/ui/icon-names.ts after upgrading vue-iconsax
 ```
 
 Tests live in `tests/` and use only the public entry points. `smoke/fixture` is a separate consumer app with its own `package.json`; don't import it from `src/`.

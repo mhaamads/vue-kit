@@ -1,1 +1,328 @@
-/* vue-kit theme: tokens and dark variant land in ticket 04. */
+/*
+ * vue-kit theme (ADR-0006). Import it after Tailwind in your app's CSS:
+ *
+ *   @import 'tailwindcss';
+ *   @import '@moonlinetravel/vue-kit/theme.css';
+ *
+ * Override any token in your own @theme block. Dark mode follows [data-theme=dark].
+ * Fonts are not loaded here: load Poppins (or override --font-poppins) in your app.
+ * Tokens and utilities are ported from portal-iq-vue's main.css, icon-colors.css and z-index.css.
+ */
+
+/* Let Tailwind find the classes used by vue-kit's components. */
+@source './ui';
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --font-poppins:
+    'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --color-primary-navy-900: #094a78;
+  --color-primary-red-700: #be242a;
+  --color-primary-orange-700: #c44417;
+  --color-primary-orange-500: #e65b2a;
+  --color-primary-orange-300: #f6c3b1;
+  --color-primary-orange-100: #fcede8;
+  --text-3.5xl: 2rem; /* 32px */
+  --text-4.5xl: 2.5rem; /* 40px */
+  --color-base-neutral-50: #fcfcfd;
+  --color-base-neutral-100: #dbdee1;
+  --color-base-neutral-200: #bec5ca;
+  --color-base-neutral-300: #a2acb3;
+  --color-base-neutral-400: #86939c;
+  --color-base-neutral-500: #65727b;
+  --color-base-neutral-600: #4e585f;
+  --color-base-neutral-700: #373e43;
+  --color-base-neutral-800: #121516;
+  --color-base-neutral-950: #080b0c;
+  --color-input-disabled-bg: #ecedef;
+  --color-surface-light-100: #fafafa;
+  --color-surface-light-150: #f5f5f5;
+  --color-surface-light-200: #f7f7f7;
+  --color-surface-light-300: #f4f5f6;
+  --color-surface-dark-100: #1a1d1f;
+  --color-surface-dark-150: #1e2123;
+  --color-surface-dark-200: #222527;
+  --color-surface-dark-300: #282b2e;
+  --color-input-dark-disabled-bg: #2a2d30;
+  --color-app-error: #ff2c2c;
+  --color-app-success: #22c55e;
+  --color-app-info: #019dcb;
+  --color-app-warning: #eab308;
+  --color-app-green-700: #147638;
+  --color-app-green-600: #1b9e4b;
+  --color-app-green-200: #7adc9e;
+  --color-app-green-50: #d3f3df;
+  --color-app-red-800: #921c20;
+  --color-app-red-600: #fa0000;
+  --color-app-red-200: #ffc7c7;
+  --color-app-red-50: #fcede8;
+  --color-app-yellow-200: #f7e19c;
+  --color-app-yellow-50: #fbf0ce;
+  --color-app-blue-900: #004e66;
+  --color-app-blue-600: #017698;
+  --color-app-blue-200: #99e7ff;
+  --color-app-blue-50: #e6f9ff;
+  --breakpoint-3xl: 1920px;
+  --radius-2.5xl: 20px;
+
+  --shadow-default: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-orange-md: 0 2px 8px rgba(191, 36, 42, 0.3);
+  --shadow-orange-sm: 0 1px 6px rgba(191, 36, 42, 0.35);
+  --border-width-thin: 1.5px;
+  --tracking-label: 0.07em;
+}
+
+/* Surfaces, borders and text that switch with the theme. */
+@utility bg-surface-100 {
+  @apply bg-surface-light-100 dark:bg-surface-dark-100;
+}
+@utility bg-surface-150 {
+  @apply bg-surface-light-150 dark:bg-surface-dark-150;
+}
+@utility bg-surface-200 {
+  @apply bg-surface-light-200 dark:bg-surface-dark-200;
+}
+@utility bg-surface-300 {
+  @apply bg-surface-light-300 dark:bg-surface-dark-300;
+}
+@utility border-surface-100 {
+  @apply border-surface-light-100 dark:border-surface-dark-100;
+}
+@utility border-neutral-default {
+  @apply border-base-neutral-100/50 dark:border-white/10;
+}
+@utility divide-neutral-default {
+  @apply divide-base-neutral-100/50 dark:divide-white/10;
+}
+@utility border-neutral-input {
+  @apply border-base-neutral-100 dark:border-white/20;
+}
+@utility text-body {
+  @apply text-base-neutral-800 dark:text-white;
+}
+@utility text-body-secondary {
+  @apply text-base-neutral-600 dark:text-base-neutral-200;
+}
+@utility text-body-muted {
+  @apply text-base-neutral-400 dark:text-base-neutral-300;
+}
+@utility input-disabled {
+  @apply bg-input-disabled-bg dark:bg-input-dark-disabled-bg text-base-neutral-200 dark:text-base-neutral-500;
+}
+
+/* Icon colours: stroke every path inside an AppIcon. */
+@utility icon-primary-orange-500 {
+  @apply **:stroke-primary-orange-500;
+}
+@utility icon-white {
+  @apply **:stroke-white;
+}
+@utility icon-black {
+  @apply **:stroke-black dark:**:stroke-white;
+}
+
+@utility icon-neutral-600 {
+  @apply **:stroke-base-neutral-600;
+}
+@utility icon-neutral-500 {
+  @apply **:stroke-base-neutral-500;
+}
+@utility icon-neutral-200 {
+  @apply **:stroke-base-neutral-200;
+}
+
+@utility icon-warning {
+  @apply **:stroke-app-warning;
+}
+
+@utility icon-primary-red-700 {
+  @apply **:stroke-primary-red-700;
+}
+
+@utility icon-neutral-400 {
+  @apply **:stroke-base-neutral-400;
+}
+
+@utility icon-base-neutral-400 {
+  @apply **:stroke-base-neutral-400;
+}
+
+@utility icon-app-green-700 {
+  @apply **:stroke-app-green-700;
+}
+
+/* Primary */
+@utility icon-primary-navy-900 {
+  @apply **:stroke-primary-navy-900;
+}
+@utility icon-primary-orange-700 {
+  @apply **:stroke-primary-orange-700;
+}
+@utility icon-primary-orange-300 {
+  @apply **:stroke-primary-orange-300;
+}
+@utility icon-primary-orange-100 {
+  @apply **:stroke-primary-orange-100;
+}
+
+/* Neutral */
+@utility icon-neutral-50 {
+  @apply **:stroke-base-neutral-50;
+}
+@utility icon-neutral-100 {
+  @apply **:stroke-base-neutral-100;
+}
+@utility icon-neutral-300 {
+  @apply **:stroke-base-neutral-300;
+}
+@utility icon-neutral-700 {
+  @apply **:stroke-base-neutral-700;
+}
+@utility icon-neutral-800 {
+  @apply **:stroke-base-neutral-800;
+}
+@utility icon-neutral-950 {
+  @apply **:stroke-base-neutral-950;
+}
+
+/* Semantic */
+@utility icon-error {
+  @apply **:stroke-app-error;
+}
+@utility icon-success {
+  @apply **:stroke-app-success;
+}
+@utility icon-info {
+  @apply **:stroke-app-info;
+}
+
+/* Green */
+@utility icon-app-green-600 {
+  @apply **:stroke-app-green-600;
+}
+@utility icon-app-green-200 {
+  @apply **:stroke-app-green-200;
+}
+@utility icon-app-green-50 {
+  @apply **:stroke-app-green-50;
+}
+
+/* Red */
+@utility icon-app-red-800 {
+  @apply **:stroke-app-red-800;
+}
+@utility icon-app-red-600 {
+  @apply **:stroke-app-red-600;
+}
+@utility icon-app-red-200 {
+  @apply **:stroke-app-red-200;
+}
+@utility icon-app-red-50 {
+  @apply **:stroke-app-red-50;
+}
+
+/* Yellow */
+@utility icon-app-yellow-200 {
+  @apply **:stroke-app-yellow-200;
+}
+@utility icon-app-yellow-50 {
+  @apply **:stroke-app-yellow-50;
+}
+
+/* Blue */
+@utility icon-app-blue-900 {
+  @apply **:stroke-app-blue-900;
+}
+@utility icon-app-blue-600 {
+  @apply **:stroke-app-blue-600;
+}
+@utility icon-app-blue-200 {
+  @apply **:stroke-app-blue-200;
+}
+@utility icon-app-blue-50 {
+  @apply **:stroke-app-blue-50;
+}
+@utility icon-indigo-500 {
+  @apply **:stroke-indigo-500;
+}
+
+/* Layers; the matching names are exported as ZIndex from @moonlinetravel/vue-kit/ui. */
+@utility z-layout-1 {
+  z-index: 51;
+}
+
+@utility z-layout-2 {
+  z-index: 52;
+}
+
+@utility z-layout-3 {
+  z-index: 53;
+}
+
+@utility z-layout-4 {
+  z-index: 54;
+}
+
+@utility z-layout-5 {
+  z-index: 55;
+}
+
+@utility z-dialog-1 {
+  z-index: 101;
+}
+
+@utility z-dialog-2 {
+  z-index: 102;
+}
+
+@utility z-dialog-3 {
+  z-index: 103;
+}
+
+@utility z-dialog-4 {
+  z-index: 104;
+}
+
+@utility z-dialog-5 {
+  z-index: 105;
+}
+
+@utility z-dialog-6 {
+  z-index: 106;
+}
+
+@utility z-dialog-7 {
+  z-index: 107;
+}
+@utility z-dialog-8 {
+  z-index: 1401;
+}
+
+@utility z-toasts {
+  z-index: 1001;
+}
+
+@utility z-dropdown-1 {
+  z-index: 201;
+}
+
+@utility z-dropdown-2 {
+  z-index: 202;
+}
+
+@utility z-dropdown-3 {
+  z-index: 203;
+}
+
+@utility z-dropdown-4 {
+  z-index: 204;
+}
+
+@utility z-dropdown-5 {
+  z-index: 205;
+}
+
+@utility z-dropdown-6 {
+  z-index: 1201;
+}

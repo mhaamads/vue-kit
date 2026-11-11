@@ -1,3 +1,8 @@
 @import 'tailwindcss';
+/* theme.css registers its own @source, so no extra line is needed here. */
 @import '@moonlinetravel/vue-kit/theme.css';
-@source '../node_modules/@moonlinetravel/vue-kit/dist';
+
+/* A consumer overriding one kit token. */
+@theme {
+  --color-primary-red-700: #0a7d3e;
+}
