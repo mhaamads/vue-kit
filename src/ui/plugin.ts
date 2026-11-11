@@ -4,6 +4,15 @@ import { defaultValidationMessages, type ValidationMessages } from '../utils/val
 /** Built-in UI text. Every string a component shows or announces comes from here (ADR-0008). */
 export const defaultUiMessages = {
   loading: 'Loading',
+  notifications: 'Notifications',
+  open: 'Open',
+  dismiss: 'Dismiss',
+  copy: 'Copy',
+  copied: 'Copied',
+  confirmTitle: 'Confirm',
+  confirm: 'Confirm',
+  cancel: 'Cancel',
+  typeToConfirm: (phrase: string) => `Type "${phrase}" to proceed`,
 }
 
 export type UiMessages = typeof defaultUiMessages

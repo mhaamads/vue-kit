@@ -6,6 +6,7 @@
 
 **Status:** ready-for-agent
 
+- [ ] Prefer the native `<dialog>` + `showModal()` (as `AppConfirmDialog` in ticket 05 does): focus trap, Escape and top-layer stacking come from the browser, so no teleport or z-index is needed.
 - [ ] Both teleport to the body and take `v-model` for open state. Escape closing and backdrop closing can each be turned off.
 - [ ] Focus moves into the overlay on open, Tab stays inside, and focus returns to the trigger on close.
 - [ ] `role="dialog"`, `aria-modal="true"` and `aria-labelledby` point at `AppOverlayHeading`. The close button's label comes from `messages`.
