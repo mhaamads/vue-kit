@@ -1,2 +1,10 @@
-// Filled by ticket 06 (HTTP client).
-export {}
+export {
+  createHttpClient,
+  defaultHttpMessages,
+  HttpError,
+  type ErrorResponse,
+  type HttpClientConfig,
+  type HttpMessages,
+  type RequestMethod,
+  type RequestOptions,
+} from './client'
