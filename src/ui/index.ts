@@ -13,6 +13,9 @@ export { default as AppIcon } from './AppIcon.vue'
 export { default as AppText } from './AppText.vue'
 export { default as AppToasts } from './AppToasts.vue'
 export { default as AppConfirmDialog } from './AppConfirmDialog.vue'
+export { default as AppDialog } from './AppDialog.vue'
+export { default as AppDrawer } from './AppDrawer.vue'
+export { default as AppOverlayHeading } from './AppOverlayHeading.vue'
 export {
   dismissToast,
   feedbackState,

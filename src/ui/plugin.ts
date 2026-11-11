@@ -6,6 +6,7 @@ export const defaultUiMessages = {
   loading: 'Loading',
   notifications: 'Notifications',
   open: 'Open',
+  close: 'Close',
   dismiss: 'Dismiss',
   copy: 'Copy',
   copied: 'Copied',

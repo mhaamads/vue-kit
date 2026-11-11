@@ -1,11 +1,10 @@
 <template>
-  <!-- Native modal dialog: focus stays inside, Escape fires `cancel`, top layer needs no z-index. -->
   <dialog
     ref="dialog"
+    v-bind="dialogProps"
     :aria-labelledby="titleId"
     :aria-describedby="messageId"
     class="m-auto w-full max-w-100 rounded-2xl bg-white p-4 text-center backdrop:bg-black/40 dark:bg-base-neutral-800"
-    @cancel.prevent="answerConfirm(false)"
   >
     <template v-if="request">
       <div
@@ -41,7 +40,6 @@
         :class="request.confirmText ? 'mt-6' : 'mt-8'"
       >
         <AppButton
-          ref="cancelButton"
           size="40"
           class="w-full"
           :variant="request.cancelVariant ?? 'outline'"
@@ -62,18 +60,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 import AppButton from './AppButton.vue'
 import AppIcon from './AppIcon.vue'
 import AppText from './AppText.vue'
 import { answerConfirm, feedbackState, type ToastKind } from './feedback'
 import type { IconName } from './icon-names'
+import { useModalDialog } from './overlay'
 import { useVueKit } from './plugin'
 
 const { messages } = useVueKit()
-const dialog = useTemplateRef<HTMLDialogElement>('dialog')
-const cancelButton = useTemplateRef<{ $el: HTMLElement }>('cancelButton')
 const request = computed(() => feedbackState.confirm)
+
+// Open while a request is pending; Escape answers "no". The backdrop doesn't close it (portal).
+// The first control gets focus: Cancel, or the confirmation input when one is required.
+const open = computed({
+  get: () => !!request.value,
+  set: (value) => value || answerConfirm(false),
+})
+const { dialog, dialogProps } = useModalDialog(open, {
+  closeOnEscape: () => true,
+  closeOnBackdrop: () => false,
+})
 const typed = ref('')
 const titleId = useId()
 const messageId = useId()
@@ -87,17 +95,5 @@ const looks: Record<ToastKind, { icon: IconName; glow: string; fill: string }> =
 }
 const look = computed(() => looks[request.value?.type ?? 'warning'])
 
-watch(
-  request,
-  async (open) => {
-    typed.value = ''
-    await nextTick()
-    if (!dialog.value) return
-    if (open && !dialog.value.open) dialog.value.showModal()
-    if (!open && dialog.value.open) dialog.value.close()
-    // Cancel is the safe default for a confirmation; browsers differ on what they focus.
-    if (open) cancelButton.value?.$el.focus()
-  },
-  { immediate: true },
-)
+watch(request, () => (typed.value = ''))
 </script>

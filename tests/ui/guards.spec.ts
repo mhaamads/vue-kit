@@ -11,7 +11,7 @@ const uiFiles = readdirSync(join(root, 'src/ui'), { recursive: true, encoding: '
 describe('RTL guard (ADR-0008)', () => {
   // Physical left/right utilities don't flip with dir="rtl"; use ms/me, ps/pe, start/end instead.
   const physical =
-    /(?<![\w-])(?:[a-z0-9-]+:)*(?:-?(?:ml|mr|pl|pr|left|right|scroll-ml|scroll-mr)-[\w./[\]-]+|rounded-[lr](?:-[\w[\]]+)?|border-[lr](?:-[\w[\]]+)?|text-left|text-right|float-left|float-right)(?![\w-])/g
+    /(?<![\w-])(?:[a-z0-9-]+:)*(?:-?(?:ml|mr|pl|pr|left|right|scroll-ml|scroll-mr)-[\w./[\]-]+|rounded-(?:[lr]|tl|tr|bl|br)(?:-[\w[\]]+)?|border-[lr](?:-[\w[\]]+)?|text-left|text-right|float-left|float-right)(?![\w-])/g
 
   it('uses no physical direction classes in src/ui', () => {
     const hits = uiFiles.flatMap(({ file, text }) =>
