@@ -13,4 +13,5 @@
 - [ ] Retry: `onError` can resend once. A second failure is thrown, never retried forever.
 - [ ] Regression: `showSuccessToast` shows a toast after a successful JSON response even when `responseType` is not set.
 - [ ] Tests stub the global `fetch` and assert the requests sent, the results and the errors thrown.
+- [ ] The HTTP option and error types are exported from `./http` (moved from ticket 03).
 - [ ] No portal-specific logic: no branch headers, email gate, API-version retry or store reads.

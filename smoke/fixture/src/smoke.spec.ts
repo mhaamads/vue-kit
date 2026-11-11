@@ -20,3 +20,12 @@ it('validates a schema through the installed package', () => {
   const errors: FormErrors<Signup> = validate(schema, { email: 'nope', tags: ['a'] })
   expect(errors).toEqual({ email: ['Email must be a valid email.'] })
 })
+
+it('runs the vue-based event bus against the app’s own vue (peer dependency)', async () => {
+  const { broadcastEvent, useGlobalEvent } = await import('@moonlinetravel/vue-kit/utils')
+  const seen: unknown[] = []
+  const off = useGlobalEvent('saved', (p) => seen.push(p))
+  broadcastEvent('saved', { id: 1 })
+  off()
+  expect(seen).toEqual([{ id: 1 }])
+})

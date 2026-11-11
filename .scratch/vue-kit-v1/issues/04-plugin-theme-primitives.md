@@ -8,6 +8,7 @@
 
 - [ ] `createVueKit` accepts `dir`, `messages` (partial, merged over English defaults), `components` (override keys for every v1 input) and `devBypassValidation`. It provides them through typed injection keys, and each one has a default, so components also work without the plugin.
 - [ ] `theme.css` ships the colour tokens and the `dark` custom variant on `[data-theme=dark]`. The fixture overrides one token in its own `@theme` and sees the new colour.
+- [ ] `ZIndex` scale (layout, dialog, toast and dropdown layers) exported together with the matching `z-*` utilities in `theme.css` (moved from ticket 03).
 - [ ] `AppText`: size, weight and colour scale; text only (no HTML mode).
 - [ ] `AppIcon`: Iconsax-backed, with icon-name types.
 - [ ] `AppButton`: variants, sizes, icon, loading and disabled. With `to` it renders the app's registered `RouterLink` when there is one, otherwise an `<a>`. No `vue-router` import.
