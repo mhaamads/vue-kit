@@ -45,7 +45,7 @@ type FieldApi<T> = {
   invalid: ComputedRef<boolean>
   touched: Ref<boolean>                          // set on first blur
   dirty: ComputedRef<boolean>                    // value !== value at mount / last reset()
-  reset: () => void
+  reset: (value?: T) => void                     // with a value: new baseline (e.g. after loading a record)
   disabled: ComputedRef<boolean>
   readonly: ComputedRef<boolean>
   required: ComputedRef<boolean>
@@ -210,7 +210,7 @@ app.use(createVueKit({
 }))
 ```
 
-`<AppInput>` always runs `useTextInput()` itself. If a global override is registered, it renders that component with one prop, `field: TextInputApi`, and passes its slots through:
+`<AppInput>` always runs `useTextInput()` itself. If a global override is registered, it renders that component with one prop, `field: TextInputField` (the API wrapped in `reactive()`, so refs are unwrapped: `field.inputProps`, not `.value`; the same object the default slot receives), and passes its slots through. A default slot on the instance (level 3) wins over the global override:
 
 ```vue
 <!-- MyInput.vue -->
@@ -220,9 +220,9 @@ defineProps<{ field: TextInputApi }>()
 </script>
 <template>
   <div class="my-field">
-    <label v-bind="field.labelProps.value">{{ field.id.value }}</label>
-    <input v-bind="field.inputProps.value" />
-    <small v-if="field.error.value" v-bind="field.errorProps.value">{{ field.error.value }}</small>
+    <label v-bind="field.labelProps">{{ field.label }}</label>
+    <input v-bind="field.inputProps" />
+    <small v-if="field.error" v-bind="field.errorProps">{{ field.error }}</small>
   </div>
 </template>
 ```
