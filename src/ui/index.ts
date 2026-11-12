@@ -40,6 +40,7 @@ export {
 } from './styles'
 export { default as AppInput } from './inputs/AppInput.vue'
 export { default as AppInputSkin } from './inputs/AppInputSkin.vue'
+export { default as AppForm } from './inputs/AppForm.vue'
 export { useField, type FieldApi, type UseFieldOptions } from './inputs/use-field'
 export {
   useTextInput,

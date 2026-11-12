@@ -22,3 +22,13 @@ it('mounts AppInput from the installed package with label, hint and error wiring
   expect(input.attributes('aria-describedby')).toBe('email-hint email-error')
   expect(input.attributes('aria-invalid')).toBe('true')
 })
+
+it('mounts the generic AppForm from the installed package and blocks an invalid submit', async () => {
+  const { AppForm } = await import('@moonlinetravel/vue-kit/ui')
+  const { defineSchema } = await import('@moonlinetravel/vue-kit/utils')
+  const formData = { email: '' }
+  const schema = defineSchema<typeof formData>({ email: { required: true } })
+  const wrapper = mount(AppForm, { props: { formData, schema } })
+  await wrapper.find('form').trigger('submit')
+  expect(wrapper.emitted('submit')).toBeUndefined()
+})
