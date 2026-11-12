@@ -1,5 +1,5 @@
 // Country dial codes for the tel input: [ISO code, dial code, English name, local name?].
-// Generated once from portal-iq-vue src/components/ui/form/inputs/data/country-code.ts.
+// Generated once from a dial-code list.
 export type Country = readonly [code: string, dialCode: string, name: string, localName?: string]
 
 export const countries: readonly Country[] = [
@@ -235,7 +235,6 @@ export const countries: readonly Country[] = [
   ['TT', '+1868', 'Trinidad and Tobago'],
   ['TN', '+216', 'Tunisia', 'تونس'],
   ['TR', '+90', 'Turkey', 'Türkiye'],
-  ['TR', '+90', 'Türkiye'],
   ['TM', '+993', 'Turkmenistan', 'Türkmenistan'],
   ['TC', '+1649', 'Turks and Caicos Islands'],
   ['TV', '+688', 'Tuvalu'],

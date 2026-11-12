@@ -1,7 +1,9 @@
 /** Rule definition for a single field in a validation schema */
 export type FieldRule = {
-  /** Whether the field is required */
+  /** Whether the field is required (`false` and `0` count as answers; see `accepted`) */
   required?: boolean
+  /** The value must be `true`, e.g. an "I accept the terms" checkbox */
+  accepted?: boolean
   /** Human-readable label used in error messages */
   label?: string
   /** Expected primitive type */

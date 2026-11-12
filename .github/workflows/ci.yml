@@ -21,3 +21,5 @@ jobs:
       - run: npm test
       # Builds, packs and installs the tarball into smoke/fixture.
       - run: npm run smoke
+      # The docs carry the design system (ADR-0012): they must keep building.
+      - run: npm run docs:build

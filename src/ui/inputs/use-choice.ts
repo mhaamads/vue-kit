@@ -1,13 +1,6 @@
-// Checkbox, switch, radio-group and checkbox-group behaviour (design doc §3), on native inputs:
+// Checkbox, switch, radio-group and checkbox-group behaviour, on native inputs:
 // keyboard handling (Space, arrow keys between radios) comes from the browser.
-import {
-  computed,
-  onBeforeMount,
-  toValue,
-  type ComputedRef,
-  type MaybeRefOrGetter,
-  type UnwrapNestedRefs,
-} from 'vue'
+import { computed, onBeforeMount, toValue, type MaybeRefOrGetter, type UnwrapNestedRefs } from 'vue'
 import { useField, type UseFieldOptions } from './use-field'
 
 export type ChoiceValue = string | number | boolean
@@ -26,13 +19,13 @@ type Common = {
 export type UseChoiceOptions = UseFieldOptions<unknown> &
   Common & {
     description?: MaybeRefOrGetter<string | undefined>
-    /** Value mode (portal): the model is `value` when checked and `undefined` when not. */
+    /** Value mode: the model is `value` when checked and `undefined` when not. */
     value?: MaybeRefOrGetter<unknown>
     /** Model value when checked. Default `true`. */
     trueValue?: MaybeRefOrGetter<unknown>
     /** Model value when unchecked. Default `false`. */
     falseValue?: MaybeRefOrGetter<unknown>
-    /** `switch` adds role="switch" and keeps the model at one of the two values (portal). */
+    /** `switch` adds role="switch" and keeps the model at one of the two values. */
     role?: 'checkbox' | 'switch'
   }
 
@@ -40,11 +33,9 @@ export type UseChoiceOptions = UseFieldOptions<unknown> &
 export const useChoice = (options: UseChoiceOptions) => {
   const field = useField({
     ...options,
-    hasHint: () => !!toValue(options.hint),
-    describedBy: (): string | undefined =>
-      toValue(options.description) ? descriptionId.value : undefined,
+    hasHint: () => !!toValue(options.hint) || !!toValue(options.hasHint),
+    hasDescription: () => !!toValue(options.description) || !!toValue(options.hasDescription),
   })
-  const descriptionId: ComputedRef<string> = computed((): string => `${field.id.value}-description`)
   const valueMode = () => toValue(options.value) !== undefined
   const on = () => (valueMode() ? toValue(options.value) : (toValue(options.trueValue) ?? true))
   const off = () => (valueMode() ? undefined : (toValue(options.falseValue) ?? false))
@@ -55,7 +46,7 @@ export const useChoice = (options: UseChoiceOptions) => {
     field.setValue(checked.value ? off() : on())
   }
 
-  // A switch is always on or off; settle an unknown starting value to "off" (portal).
+  // A switch is always on or off; settle an unknown starting value to "off".
   if (options.role === 'switch') {
     onBeforeMount(() => {
       if (field.value.value !== on() && field.value.value !== off()) field.setValue(off())
@@ -67,7 +58,6 @@ export const useChoice = (options: UseChoiceOptions) => {
     label: computed(() => toValue(options.label)),
     hint: computed(() => toValue(options.hint)),
     description: computed(() => toValue(options.description)),
-    descriptionProps: computed(() => ({ id: descriptionId.value })),
     checked,
     toggle,
     inputProps: computed(() => ({
@@ -91,7 +81,7 @@ export type UseChoiceGroupOptions = UseFieldOptions<unknown> &
     options: MaybeRefOrGetter<ChoiceOption[]>
     /** Checkbox group (array model) instead of a radio group. */
     multiple?: boolean
-    /** Radio group: pick the first option when the model starts empty. Default true (portal). */
+    /** Radio group: pick the first option when the model starts empty. Default true. */
     selectFirstOption?: MaybeRefOrGetter<boolean | undefined>
     /** Radio group: clicking the selected option clears the selection. */
     allowSelectionRemoval?: MaybeRefOrGetter<boolean | undefined>
@@ -99,13 +89,16 @@ export type UseChoiceGroupOptions = UseFieldOptions<unknown> &
 
 /** A radio group, or a checkbox group with `multiple`. */
 export const useChoiceGroup = (options: UseChoiceGroupOptions) => {
-  const field = useField({ ...options, hasHint: () => !!toValue(options.hint) })
+  const field = useField({
+    ...options,
+    hasHint: () => !!toValue(options.hint) || !!toValue(options.hasHint),
+  })
   const list = computed(() => toValue(options.options))
   const multiple = !!options.multiple
   const selected = () =>
     Array.isArray(field.value.value) ? (field.value.value as ChoiceValue[]) : []
 
-  // Loose equality like portal, so '1' from a query string matches 1 from the API.
+  // Loose equality, so '1' from a query string matches 1 from the API.
   const same = (a: unknown, b: unknown) => a == b
 
   const isSelected = (option: ChoiceOption) =>
@@ -152,8 +145,8 @@ export const useChoiceGroup = (options: UseChoiceGroupOptions) => {
     multiple,
     isSelected,
     select,
-    /** A group has no single control, so the label is referenced, not `for`-linked. */
-    groupLabelProps: computed(() => ({ id: field.labelProps.value.id })),
+    /** A group has no single control, so the label names the group instead of `for`-linking. */
+    labelProps: computed(() => ({ id: field.labelProps.value.id })),
     groupProps: computed(() => ({
       id: field.id.value,
       role: multiple ? ('group' as const) : ('radiogroup' as const),

@@ -1,31 +1,32 @@
 // @vitest-environment happy-dom
 import { expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { AppButton, createVueKit } from '@moonlinetravel/vue-kit/ui'
+import { AppButton, AppForm, AppInput, createVueKit } from '@mhaamads/vue-kit/ui'
+import { defineSchema } from '@mhaamads/vue-kit/utils'
 
-it('mounts AppButton from the installed package with the plugin', () => {
+it('mounts the headless AppButton from the installed package with the plugin', () => {
   const wrapper = mount(AppButton, {
-    props: { text: 'Save', loading: true },
-    global: { plugins: [createVueKit({ messages: { loading: 'Saving…' } })] },
+    props: { loading: true },
+    slots: { default: 'Save' },
+    global: { plugins: [createVueKit()] },
   })
   expect(wrapper.attributes('type')).toBe('button')
-  expect(wrapper.find('.sr-only').text()).toBe('Saving…')
+  expect(wrapper.attributes('aria-busy')).toBe('true')
+  expect(wrapper.attributes('class')).toBeUndefined()
 })
 
-it('mounts AppInput from the installed package with label, hint and error wiring', async () => {
-  const { AppInput } = await import('@moonlinetravel/vue-kit/ui')
+it('mounts AppInput with label, hint and error wiring, and app-wide ui classes', () => {
   const wrapper = mount(AppInput, {
     props: { id: 'email', label: 'Email', hint: 'Work address', errors: ['Required.'] },
+    global: { plugins: [createVueKit({ ui: { input: { input: 'mine' } } })] },
   })
-  const input = wrapper.find('input')
+  const input = wrapper.find('input.mine')
   expect(wrapper.find('label').attributes('for')).toBe('email')
   expect(input.attributes('aria-describedby')).toBe('email-hint email-error')
   expect(input.attributes('aria-invalid')).toBe('true')
 })
 
 it('mounts the generic AppForm from the installed package and blocks an invalid submit', async () => {
-  const { AppForm } = await import('@moonlinetravel/vue-kit/ui')
-  const { defineSchema } = await import('@moonlinetravel/vue-kit/utils')
   const formData = { email: '' }
   const schema = defineSchema<typeof formData>({ email: { required: true } })
   const wrapper = mount(AppForm, { props: { formData, schema } })

@@ -8,7 +8,7 @@ There were three options: one package, a core + ui split, or a three-way split. 
 
 ## Decision
 
-One package, `@moonlinetravel/vue-kit`, with subpath exports `./utils`, `./http` and `./ui`. The `./data-grid` subpath in the original decision is withdrawn by ADR-0010.
+One package, `@mhaamads/vue-kit`, with subpath exports `./utils`, `./http` and `./ui`. The `./data-grid` subpath in the original decision is withdrawn by ADR-0010.
 
 ## Consequences
 

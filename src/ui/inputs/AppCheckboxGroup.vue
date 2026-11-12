@@ -1,54 +1,42 @@
 <template>
-  <slot v-if="$slots.default" v-bind="field" />
-  <component :is="override" v-else-if="override" :field="field" />
-  <div v-else>
-    <p
-      v-if="field.label"
-      v-bind="field.groupLabelProps"
-      class="mb-2 flex text-sm font-medium capitalize dark:text-white"
-    >
-      {{ field.label
-      }}<span v-if="field.required" class="text-red-500" aria-hidden="true">&nbsp;*</span>
+  <div v-bind="field.dataAttrs" :class="ui.root">
+    <p v-if="field.label || $slots.label" :id="field.labelProps.id" :class="ui.label">
+      <slot name="label" :label="field.label">{{ field.label }}</slot>
     </p>
-    <div
-      v-bind="field.groupProps"
-      class="flex flex-wrap gap-3"
-      :class="direction === 'vertical' ? 'flex-col' : 'flex-row'"
-    >
+    <div v-bind="field.groupProps" :class="ui.group">
       <label
         v-for="(option, i) in field.options"
         :key="String(option.value)"
         v-bind="field.itemLabelProps(option, i)"
-        class="group flex cursor-pointer items-start gap-2 has-disabled:cursor-not-allowed has-disabled:opacity-60"
+        :data-state="field.isSelected(option) ? 'checked' : 'unchecked'"
+        :data-disabled="option.disabled || field.disabled ? '' : undefined"
+        :class="ui.item"
       >
-        <input v-bind="field.itemProps(option, i)" class="peer sr-only" />
-        <span
-          aria-hidden="true"
-          class="grid aspect-square h-5 shrink-0 place-content-center rounded-sm border border-neutral-default bg-surface-200 text-white peer-checked:border-primary-orange-300 peer-checked:bg-primary-orange-500 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-orange-500"
-        >
-          <svg viewBox="0 0 24 24" class="hidden size-3.5 group-has-checked:block" fill="none">
-            <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3" />
-          </svg>
-        </span>
-        <span class="flex flex-col items-start gap-0.5">
-          <span class="text-sm font-medium capitalize text-body">{{ option.label }}</span>
-          <span
+        <input v-bind="field.itemProps(option, i)" :class="ui.itemInput" />
+        <slot name="item" :option="option" :checked="field.isSelected(option)">
+          {{ option.label }}
+          <small
             v-if="option.description"
             v-bind="field.itemDescriptionProps(option, i)"
-            class="text-start text-xs text-base-neutral-600 dark:text-base-neutral-100"
+            :class="ui.itemDescription"
           >
             {{ option.description }}
-          </span>
-        </span>
+          </small>
+        </slot>
       </label>
     </div>
-    <FieldFeedback :field="field" />
+    <FieldFeedback :field="field" :ui="ui">
+      <template v-if="$slots.hint" #hint="s"><slot name="hint" v-bind="s" /></template>
+      <template v-if="$slots.errors" #errors="s"><slot name="errors" v-bind="s" /></template>
+    </FieldFeedback>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useVueKit } from '../plugin'
+// Checkbox group: native checkboxes; the model is an array in click order.
+// Each option is a <label> with data-state / data-disabled, so a whole card can be clickable.
+import { reactive, useSlots } from 'vue'
+import { useUi, type ChoiceGroupUi } from '../ui'
 import FieldFeedback from './FieldFeedback.vue'
 import { useChoiceGroup, type ChoiceOption } from './use-choice'
 
@@ -59,21 +47,24 @@ const props = withDefaults(
     label?: string
     hint?: string
     errors?: string[]
-    direction?: 'horizontal' | 'vertical'
     required?: boolean
     disabled?: boolean
     readonly?: boolean
+    /** Classes per piece; wins over `createVueKit({ ui: { checkboxGroup } })`. */
+    ui?: ChoiceGroupUi
   }>(),
-  { direction: 'horizontal' },
+  {},
 )
 const model = defineModel<ChoiceOption['value'][]>()
 
+const slots = useSlots()
 const field = reactive(
   useChoiceGroup({
     model,
     multiple: true,
     options: () => props.options,
     id: () => props.id,
+    hasHint: () => !!slots.hint,
     label: () => props.label,
     hint: () => props.hint,
     errors: () => props.errors,
@@ -82,6 +73,5 @@ const field = reactive(
     readonly: () => props.readonly,
   }),
 )
-
-const override = useVueKit().components.CheckboxGroup
+const ui = useUi('checkboxGroup', () => props.ui)
 </script>

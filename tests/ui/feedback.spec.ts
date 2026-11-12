@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import {
   AppConfirmDialog,
@@ -9,10 +9,10 @@ import {
   feedbackState,
   useConfirm,
   useToast,
-} from '@moonlinetravel/vue-kit/ui'
+} from '@mhaamads/vue-kit/ui'
 
 const withKit = (messages = {}) => ({
-  global: { plugins: [createVueKit({ messages })] },
+  global: { plugins: [createVueKit({ locales: { en: { messages } } })] },
   attachTo: document.body,
 })
 
@@ -22,7 +22,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('useToast (portal toast store rules)', () => {
+describe('useToast queue rules', () => {
   beforeEach(() => vi.useFakeTimers())
 
   it('works outside components and returns the toast id', () => {
@@ -62,7 +62,7 @@ describe('AppToasts', () => {
     expect(wrapper.find('[role="alert"]').text()).toContain('Failed')
   })
 
-  it('renders HTML-looking text as text and runs nothing (fixes portal v-html XSS)', async () => {
+  it('renders HTML-looking text as text and runs nothing (no v-html)', async () => {
     const wrapper = mount(AppToasts, withKit())
     useToast({ type: 'error', message: '<img src=x onerror="window.__xss=1">' })
     await nextTick()
@@ -85,8 +85,10 @@ describe('AppToasts', () => {
     const wrapper = mount(AppToasts, withKit({ dismiss: 'Close' }))
     useToast({ type: 'info', message: 'Hi', persistent: true })
     await nextTick()
-    const button = wrapper.find('button[aria-label="Close"]')
+    const button = wrapper.find('button[data-toast-close]')
+    expect(button.text()).toBe('Close')
     expect(button.attributes('type')).toBe('button')
+    expect(wrapper.find('[data-toast]').attributes('data-type')).toBe('info')
     await button.trigger('click')
     expect(feedbackState.toasts).toEqual([])
   })
@@ -135,6 +137,45 @@ describe('AppToasts', () => {
     expect(writeText).toHaveBeenCalledWith('a\nb')
     expect(wrapper.text()).toContain('Copied')
     vi.unstubAllGlobals()
+  })
+})
+
+describe('feedback uses the kit’s own components, so it matches the app', () => {
+  it('confirm buttons are AppButtons (secondary / primary, danger for errors) and the input is AppInput', async () => {
+    const wrapper = mount(AppConfirmDialog, {
+      attachTo: document.body,
+      global: {
+        plugins: [
+          createVueKit({
+            ui: {
+              button: { secondary: 'btn-2', primary: 'btn-1', danger: 'btn-x' },
+              input: { input: 'field' },
+            },
+          }),
+        ],
+      },
+    })
+    void useConfirm('Sure?')
+    await nextTick()
+    expect(wrapper.find('[data-confirm-cancel]').classes()).toEqual(['btn-2'])
+    expect(wrapper.find('[data-confirm-action]').classes()).toEqual(['btn-1'])
+    void useConfirm({ type: 'error', message: 'Delete?', confirmText: 'delete' })
+    await nextTick()
+    expect(wrapper.find('[data-confirm-action]').classes()).toEqual(['btn-x'])
+    expect(wrapper.find('input').classes()).toEqual(['field'])
+  })
+
+  it('toasts draw their buttons with AppButton and let the close button be replaced', async () => {
+    const wrapper = mount(AppToasts, {
+      attachTo: document.body,
+      slots: { close: ({ dismiss }: any) => h('button', { class: 'x', onClick: dismiss }, '✕') },
+      global: { plugins: [createVueKit({ ui: { button: { ghost: 'btn-ghost' } } })] },
+    })
+    useToast({ type: 'error', message: 'Failed', persistent: true })
+    await nextTick()
+    expect(wrapper.find('button.btn-ghost').text()).toBe('Copy')
+    await wrapper.find('button.x').trigger('click')
+    expect(feedbackState.toasts).toEqual([])
   })
 })
 
@@ -194,7 +235,7 @@ describe('useConfirm + AppConfirmDialog', () => {
     expect(buttons(wrapper).confirm.attributes('disabled')).toBeUndefined()
   })
 
-  it('cancels a still-open request when a new one arrives (portal left it pending)', async () => {
+  it('cancels a still-open request when a new one arrives', async () => {
     await open()
     const first = useConfirm('First?')
     void useConfirm('Second?')

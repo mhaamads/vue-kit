@@ -1,12 +1,12 @@
 {
   "extends": "./tsconfig.app.json",
-  "include": ["src/**/*", "src/**/*.vue", "tests/**/*"],
+  "include": ["src/**/*", "src/**/*.vue", "tests/**/*", "site/.vitepress/**/*", "site/skin/**/*"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
     "types": ["node"],
     "resolveJsonModule": true,
     "paths": {
-      "@moonlinetravel/vue-kit/*": ["./src/*/index.ts"]
+      "@mhaamads/vue-kit/*": ["./src/*/index.ts"]
     }
   }
 }

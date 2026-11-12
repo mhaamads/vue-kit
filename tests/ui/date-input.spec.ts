@@ -1,221 +1,142 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { h } from 'vue'
+import { h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import { AppDateInput, createVueKit, toDate } from '@moonlinetravel/vue-kit/ui'
-import { contractUis } from './contract'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import { AppDateInput, createVueKit, formatDateValue, toDate } from '@mhaamads/vue-kit/ui'
+import { dateField } from './contract'
 
 afterEach(() => {
   document.body.innerHTML = ''
 })
 
-// Minimal custom UI: native inputs bound from the field API, nothing else.
-const minimalDate = (f: any) =>
-  h('div', [
-    f.label ? h('label', f.labelProps, f.label) : null,
-    ...(f.range ? [h('input', f.startProps), h('input', f.endProps)] : [h('input', f.inputProps)]),
-    f.clearable && f.hasValue ? h('button', f.clearProps, 'x') : null,
-    f.error ? h('span', f.errorProps, f.error) : null,
-  ])
-
 const lastModel = (w: { emitted: (e: string) => unknown[][] | undefined }) =>
   w.emitted('update:modelValue')?.at(-1)?.[0]
+const trigger = (w: any) => w.find('button[aria-haspopup="dialog"]')
+const picker = (w: any) => w.findComponent(VueDatePicker)
 
-/** What the browser does when the user picks a value: set it, then fire change. */
-const pick = async (input: any, value: string) => {
-  input.element.value = value
-  await input.trigger('change')
-}
-
-describe('toDate', () => {
+describe('toDate / formatDateValue', () => {
   it('reads YYYY-MM-DD as a local day, not UTC midnight', () => {
     expect(toDate('2026-03-05')).toEqual(new Date(2026, 2, 5))
     expect(toDate('2026-03-05T14:30')).toEqual(new Date(2026, 2, 5, 14, 30))
     expect(toDate('')).toBeNull()
     expect(toDate('nope')).toBeNull()
   })
+
+  it('formats every value shape in the given language', () => {
+    expect(formatDateValue(new Date(2026, 10, 12), 'date', 'en-GB')).toBe('12 Nov 2026')
+    expect(formatDateValue({ month: 10, year: 2026 }, 'month', 'en')).toBe('November 2026')
+    expect(formatDateValue(2026, 'year', 'en')).toBe('2026')
+    expect(formatDateValue([new Date(2026, 0, 1), new Date(2026, 0, 7)], 'date', 'en-GB')).toBe(
+      '1 Jan 2026 – 7 Jan 2026',
+    )
+    expect(formatDateValue(null, 'date', 'en')).toBe('')
+  })
 })
 
-describe.each(contractUis(AppDateInput, 'DateInput', minimalDate))(
-  'AppDateInput (%s)',
-  (ui, mountInput) => {
-    it('date: shows a Date as YYYY-MM-DD and emits a local Date', async () => {
-      const wrapper = mountInput({
-        props: { label: 'Start', id: 'start' },
-        model: new Date(2026, 0, 9),
-      })
-      const input = wrapper.find('input')
-      expect(input.attributes('type')).toBe('date')
-      expect(input.element.value).toBe('2026-01-09')
-      expect(wrapper.find('label').attributes('for')).toBe('start')
-      await pick(input, '2026-02-28')
-      expect(lastModel(wrapper)).toEqual(new Date(2026, 1, 28))
-    })
+describe('AppDateInput (on @vuepic/vue-datepicker)', () => {
+  it('links the label to its trigger and shows the value or the placeholder', async () => {
+    const empty = dateField({ props: { label: 'Travel', id: 'travel' } })
+    expect(empty.find('label').attributes('for')).toBe('travel')
+    expect(trigger(empty).attributes('id')).toBe('travel')
+    expect(trigger(empty).text()).toBe('Select date')
 
-    it('accepts string and number models', () => {
-      expect(mountInput({ model: '2026-04-01' }).find('input').element.value).toBe('2026-04-01')
-      expect(
-        mountInput({ model: new Date(2026, 3, 2).getTime() }).find('input').element.value,
-      ).toBe('2026-04-02')
-    })
-
-    it('datetime: uses datetime-local and keeps the time', async () => {
-      const wrapper = mountInput({ props: { mode: 'datetime' }, model: new Date(2026, 0, 9, 8, 5) })
-      const input = wrapper.find('input')
-      expect(input.attributes('type')).toBe('datetime-local')
-      expect(input.element.value).toBe('2026-01-09T08:05')
-      await pick(input, '2026-01-10T17:45')
-      expect(lastModel(wrapper)).toEqual(new Date(2026, 0, 10, 17, 45))
-    })
-
-    it('month: emits { month, year } with a 0-based month, like portal', async () => {
-      const wrapper = mountInput({ props: { mode: 'month' }, model: { month: 0, year: 2026 } })
-      const input = wrapper.find('input')
-      expect(input.attributes('type')).toBe('month')
-      expect(input.element.value).toBe('2026-01')
-      await pick(input, '2026-12')
-      expect(lastModel(wrapper)).toEqual({ month: 11, year: 2026 })
-    })
-
-    it('week: emits [monday, sunday] and handles weeks across New Year (ISO 8601)', async () => {
-      const wrapper = mountInput({ props: { mode: 'week' }, model: new Date(2026, 0, 1) })
-      const input = wrapper.find('input')
-      expect(input.attributes('type')).toBe('week')
-      expect(input.element.value).toBe('2026-W01')
-      await pick(input, '2026-W01')
-      expect(lastModel(wrapper)).toEqual([new Date(2025, 11, 29), new Date(2026, 0, 4)])
-      await pick(input, '2026-W53')
-      expect(lastModel(wrapper)).toEqual([new Date(2026, 11, 28), new Date(2027, 0, 3)])
-      expect(
-        mountInput({ props: { mode: 'week' }, model: new Date(2027, 0, 1) }).find('input').element
-          .value,
-      ).toBe('2026-W53')
-    })
-
-    it('maps minDate / maxDate to native min / max', () => {
-      const wrapper = mountInput({
-        props: { minDate: new Date(2026, 0, 1), maxDate: '2026-12-31' },
-      })
-      const input = wrapper.find('input')
-      expect(input.attributes('min')).toBe('2026-01-01')
-      expect(input.attributes('max')).toBe('2026-12-31')
-    })
-
-    it('rejects a disabled day: keeps the model, resets the input and reports an error', async () => {
-      const wrapper = mountInput({
-        props: { id: 'd', disabledDates: ['2026-05-01'] },
-        model: new Date(2026, 3, 30),
-      })
-      const input = wrapper.find('input')
-      await pick(input, '2026-05-01')
-      expect(wrapper.emitted('update:modelValue')).toBeUndefined()
-      expect(input.element.value).toBe('2026-04-30')
-      expect(input.attributes('aria-invalid')).toBe('true')
-      expect(wrapper.find('#d-error').text()).toContain('This date is not available.')
-      await pick(input, '2026-05-02')
-      expect(lastModel(wrapper)).toEqual(new Date(2026, 4, 2))
-      expect(input.attributes('aria-invalid')).toBeUndefined()
-    })
-
-    it('rejects a typed date outside minDate / maxDate (native min/max only limit the picker)', async () => {
-      const wrapper = mountInput({ props: { minDate: '2026-01-01', maxDate: '2026-12-31' } })
-      const input = wrapper.find('input')
-      await pick(input, '2020-06-01')
-      await pick(input, '2027-01-01')
-      expect(wrapper.emitted('update:modelValue')).toBeUndefined()
-      expect(input.attributes('aria-invalid')).toBe('true')
-      await pick(input, '2026-06-01')
-      expect(lastModel(wrapper)).toEqual(new Date(2026, 5, 1))
-    })
-
-    it('range: rejects an end before the start, and a start after the end', async () => {
-      const wrapper = mountInput({
-        props: { range: true },
-        model: [new Date(2026, 0, 10), new Date(2026, 0, 20)],
-      })
-      const [start, end] = wrapper.findAll('input')
-      await pick(end, '2026-01-05')
-      await pick(start, '2026-01-25')
-      expect(wrapper.emitted('update:modelValue')).toBeUndefined()
-      expect(end!.element.value).toBe('2026-01-20')
-      expect(start!.element.value).toBe('2026-01-10')
-    })
-
-    it('drops the "not available" error when the model is set from outside', async () => {
-      const wrapper = mountInput({ props: { disabledDates: ['2026-05-01'] }, model: null })
-      await pick(wrapper.find('input'), '2026-05-01')
-      expect(wrapper.find('input').attributes('aria-invalid')).toBe('true')
-      await wrapper.setProps({ modelValue: new Date(2026, 4, 3) })
-      expect(wrapper.find('input').attributes('aria-invalid')).toBeUndefined()
-    })
-
-    it('accepts only allowed days when allowedDates is set', async () => {
-      const wrapper = mountInput({ props: { allowedDates: [new Date(2026, 6, 1), '2026-07-15'] } })
-      await pick(wrapper.find('input'), '2026-07-02')
-      expect(wrapper.emitted('update:modelValue')).toBeUndefined()
-      await pick(wrapper.find('input'), '2026-07-15')
-      expect(lastModel(wrapper)).toEqual(new Date(2026, 6, 15))
-    })
-
-    it('range: two labelled inputs whose min/max follow each other', async () => {
-      const wrapper = mountInput({
-        props: { range: true, id: 'r' },
-        model: [new Date(2026, 0, 5), new Date(2026, 0, 20)],
-      })
-      const [start, end] = wrapper.findAll('input')
-      expect(start!.attributes('aria-label')).toBe('Start date')
-      expect(end!.attributes('aria-label')).toBe('End date')
-      expect(start!.attributes('max')).toBe('2026-01-20')
-      expect(end!.attributes('min')).toBe('2026-01-05')
-      expect(end!.attributes('id')).toBe('r-end')
-      await pick(end, '2026-01-25')
-      expect(lastModel(wrapper)).toEqual([new Date(2026, 0, 5), new Date(2026, 0, 25)])
-    })
-
-    it('clears with a labelled button; emptying the input also clears', async () => {
-      const wrapper = mountInput({ model: new Date(2026, 0, 9) })
-      const clear = wrapper.find('button[aria-label="Clear date"]')
-      expect(clear.attributes('type')).toBe('button')
-      await clear.trigger('click')
-      expect(lastModel(wrapper)).toBeNull()
-
-      const typed = mountInput({ model: new Date(2026, 0, 9) })
-      await pick(typed.find('input'), '')
-      expect(lastModel(typed)).toBeNull()
-    })
-
-    it('passes required, disabled and errors to the control', () => {
-      const wrapper = mountInput({
-        props: { required: true, disabled: true, errors: ['Pick a date.'] },
-      })
-      const input = wrapper.find('input')
-      expect(input.attributes('aria-required')).toBe('true')
-      expect(input.attributes('disabled')).toBeDefined()
-      expect(input.attributes('aria-invalid')).toBe('true')
-    })
-  },
-)
-
-describe('AppDateInput default UI only', () => {
-  it('lets the native picker follow dark mode through color-scheme', () => {
-    const wrapper = mount(AppDateInput)
-    expect(wrapper.find('input').classes()).toEqual(
-      expect.arrayContaining(['scheme-light', 'dark:scheme-dark']),
-    )
+    const filled = dateField({ model: new Date(2026, 10, 12) })
+    expect(trigger(filled).text()).toContain('2026')
   })
 
-  it('takes texts from messages', async () => {
+  it('emits the picker’s value through v-model', async () => {
+    const wrapper = dateField()
+    picker(wrapper).vm.$emit('update:model-value', new Date(2026, 1, 28))
+    await nextTick()
+    expect(lastModel(wrapper)).toEqual(new Date(2026, 1, 28))
+  })
+
+  it('maps its props to the picker: modes, range, limits, disabled days, time off for dates', () => {
+    const disabledDates = ['2026-05-01']
+    const wrapper = dateField({
+      props: {
+        mode: 'month',
+        range: true,
+        minDate: '2026-01-01',
+        maxDate: '2026-12-31',
+        disabledDates,
+      },
+    })
+    expect(picker(wrapper).props()).toMatchObject({
+      monthPicker: true,
+      range: true,
+      minDate: '2026-01-01',
+      maxDate: '2026-12-31',
+      disabledDates,
+    })
+    expect(picker(wrapper).props('timeConfig')).toMatchObject({ enableTimePicker: false })
+    expect(picker(dateField({ props: { mode: 'datetime' } })).props('timeConfig')).toMatchObject({
+      enableTimePicker: true,
+    })
+  })
+
+  it('passes any other picker option straight through (e.g. multi-calendars)', () => {
+    const wrapper = dateField({ attrs: { multiCalendars: 2 } })
+    expect(picker(wrapper).props('multiCalendars')).toBe(2)
+  })
+
+  it('clears with a labelled button without opening the calendar', async () => {
+    const wrapper = dateField({ model: new Date(2026, 0, 9) })
+    const clear = wrapper.find('button[aria-label="Clear date"]')
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+    clear.element.dispatchEvent(click)
+    await nextTick()
+    expect(lastModel(wrapper)).toBeNull()
+    expect(dateField({ model: null }).find('button[aria-label="Clear date"]').exists()).toBe(false)
+  })
+
+  it('is invalid and described by its hint and error; required is aria-required', () => {
+    const wrapper = dateField({
+      props: { id: 'd', hint: 'Any weekday', errors: ['Pick a date.'], required: true },
+    })
+    expect(trigger(wrapper).attributes()).toMatchObject({
+      'aria-invalid': 'true',
+      'aria-required': 'true',
+      'aria-describedby': 'd-hint d-error',
+    })
+    expect(wrapper.find('#d-error').text()).toContain('Pick a date.')
+  })
+
+  it('has leading / trailing slots, a clear slot and ui classes', async () => {
     const wrapper = mount(AppDateInput, {
-      props: { modelValue: new Date(2026, 0, 9), disabledDates: ['2026-01-10'], id: 'x' },
+      props: { modelValue: new Date(2026, 0, 9), ui: { control: 'box', trigger: 't' } },
+      slots: {
+        leading: () => h('i', '📅'),
+        clear: ({ clear }: any) => h('button', { class: 'x', onClick: clear }, '✕'),
+      },
+    })
+    expect(wrapper.find('.box [data-leading] i').text()).toBe('📅')
+    expect(trigger(wrapper).classes()).toEqual(['t'])
+    await wrapper.find('button.x').trigger('click')
+    expect(wrapper.emitted('update:modelValue')!.at(-1)).toEqual([null])
+  })
+
+  it('takes texts from the kit’s language', () => {
+    const wrapper = dateField({
+      model: new Date(2026, 0, 9),
       global: {
         plugins: [
           createVueKit({
-            messages: { clearDate: 'سڕینەوە', dateNotAllowed: 'ئەم ڕۆژە بەردەست نییە.' },
+            locale: 'ckb',
+            syncDocument: false,
+            locales: { ckb: { dir: 'rtl', messages: { clearDate: 'سڕینەوە', selectDate: 'ڕۆژ' } } },
           }),
         ],
       },
     })
-    expect(wrapper.find('button').attributes('aria-label')).toBe('سڕینەوە')
-    await pick(wrapper.find('input'), '2026-01-10')
-    expect(wrapper.find('#x-error').text()).toContain('ئەم ڕۆژە بەردەست نییە.')
+    expect(wrapper.find('button[aria-label="سڕینەوە"]').exists()).toBe(true)
+  })
+
+  it('uses a custom formatValue for the trigger text', () => {
+    const wrapper = dateField({
+      props: { formatValue: () => '09/01/2026' },
+      model: new Date(2026, 0, 9),
+    })
+    expect(trigger(wrapper).text()).toBe('09/01/2026')
   })
 })

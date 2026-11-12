@@ -1,6 +1,5 @@
-// Time behaviour (design doc §3), ported from portal-iq-vue TimeInput.vue: { hours, minutes }
-// model, 12/24 h, minute step, presets, "Now", clear. Fixed vs portal: minTime / maxTime now
-// disable out-of-range column options and clamp the result (portal only filtered presets).
+// Time behaviour: { hours, minutes } model, 12/24 h, minute step, presets, "Now", clear.
+// minTime / maxTime disable out-of-range column options and clamp the result.
 import { computed, nextTick, ref, toValue, type MaybeRefOrGetter, type UnwrapNestedRefs } from 'vue'
 import { parseTimeString } from '../../utils/helpers'
 import { useVueKit } from '../plugin'
@@ -33,7 +32,10 @@ const to24 = (h12: number, period: 'AM' | 'PM') => (h12 % 12) + (period === 'PM'
 
 export const useTimeInput = (options: UseTimeInputOptions) => {
   const { messages } = useVueKit()
-  const field = useField({ ...options, hasHint: () => !!toValue(options.hint) })
+  const field = useField({
+    ...options,
+    hasHint: () => !!toValue(options.hint) || !!toValue(options.hasHint),
+  })
 
   const open = ref(false)
   const is12 = computed(() => toValue(options.format) === 12)
@@ -64,7 +66,7 @@ export const useTimeInput = (options: UseTimeInputOptions) => {
   }
   const blocked = () => field.disabled.value || field.readonly.value
 
-  // No time yet counts as midnight, AM (portal: picking 9 in 12 h mode gives 09:00).
+  // No time yet counts as midnight, AM: picking 9 in 12 h mode gives 09:00.
   const hours24 = () => time.value?.hours ?? 0
   const minutes = () => time.value?.minutes ?? 0
   const period = computed(() => to12(hours24()).period)
@@ -90,7 +92,7 @@ export const useTimeInput = (options: UseTimeInputOptions) => {
   const periodOptions = computed((): TimeOption[] =>
     (['AM', 'PM'] as const).map((p) => ({
       value: p,
-      label: p,
+      label: p === 'AM' ? messages.am : messages.pm,
       disabled: p === 'AM' ? limits.value.min >= 12 * 60 : limits.value.max < 12 * 60,
     })),
   )
@@ -125,7 +127,7 @@ export const useTimeInput = (options: UseTimeInputOptions) => {
     if (!t) return ''
     if (!is12.value) return `${pad(t.hours)}:${pad(t.minutes)}`
     const { hours, period: p } = to12(t.hours)
-    return `${pad(hours)}:${pad(t.minutes)} ${p}`
+    return `${pad(hours)}:${pad(t.minutes)} ${p === 'AM' ? messages.am : messages.pm}`
   })
 
   // The trigger that opened the panel; Escape and OK send focus back to it, because the panel's
@@ -177,7 +179,7 @@ export const useTimeInput = (options: UseTimeInputOptions) => {
     is12,
     displayValue,
     placeholder: computed(
-      () => toValue(options.placeholder) ?? (is12.value ? 'hh:mm AM' : 'HH:mm'),
+      () => toValue(options.placeholder) ?? (is12.value ? `hh:mm ${messages.am}` : 'HH:mm'),
     ),
     columns,
     selected,

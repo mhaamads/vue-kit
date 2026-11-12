@@ -15,7 +15,7 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/coverage/**', 'smoke/fixture/**']),
+  globalIgnores(['**/dist/**', '**/coverage/**', 'smoke/fixture/**', 'site/.vitepress/cache/**', 'site/.vitepress/dist/**']),
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createHttpClient, HttpError, type HttpClientConfig } from '@moonlinetravel/vue-kit/http'
+import { createHttpClient, HttpError, type HttpClientConfig } from '@mhaamads/vue-kit/http'
 
 // Observed at the platform edge: a stubbed global fetch, plus a `notify` spy for toasts.
 type Call = { url: string; init: RequestInit }
@@ -175,6 +175,19 @@ describe('errors', () => {
     await expect(http('b', { errorMessage: 'Could not save.' })).rejects.toMatchObject({
       message: 'Could not save.',
     })
+  })
+
+  it('reads messages from a function on every request, so they follow the app language', async () => {
+    let lang = 'en'
+    const { http } = setup({
+      messages: () => ({
+        sessionExpired: lang === 'en' ? 'Sign in again.' : 'دووبارە بچۆ ژوورەوە.',
+      }),
+    })
+    replies.push(json({}, 401), json({}, 401))
+    await expect(http('a')).rejects.toMatchObject({ message: 'Sign in again.' })
+    lang = 'ckb'
+    await expect(http('b')).rejects.toMatchObject({ message: 'دووبارە بچۆ ژوورەوە.' })
   })
 
   it('suppresses error toasts entirely or for listed statuses', async () => {

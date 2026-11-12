@@ -1,90 +1,76 @@
 <template>
-  <section
-    :aria-label="messages.notifications"
-    aria-live="polite"
-    class="fixed inset-x-0 top-10 z-toasts mx-auto flex w-full max-w-135 flex-col gap-2 px-4"
-  >
-    <TransitionGroup
-      enter-active-class="transition-all duration-300 ease-out"
-      leave-active-class="transition-all duration-300 ease-out"
-      move-class="transition-transform duration-300 ease-out"
-      enter-from-class="opacity-0 -translate-y-4 scale-95"
-      leave-to-class="opacity-0 scale-95"
-    >
-      <div
-        v-for="toast in toasts"
-        :key="toast.id"
-        :role="toast.type === 'error' ? 'alert' : undefined"
-        class="relative flex w-full gap-2.5 overflow-hidden rounded-xl border border-neutral-default bg-white p-4 dark:bg-base-neutral-800"
-        :class="toast.action ? 'cursor-pointer' : ''"
-        @click="toast.action && run(toast)"
-      >
+  <!-- While a kit dialog is open, everything outside it is inert and under its backdrop, so the
+       toasts move into the top dialog (they stay position: fixed, so they look the same). -->
+  <Teleport :to="getTopDialog() ?? 'body'" :disabled="!getTopDialog()">
+    <section :aria-label="messages.notifications" aria-live="polite" data-toasts :class="ui.root">
+      <!-- Transition classes: .vk-toast-enter-from, .vk-toast-leave-to, ... (define them in your CSS). -->
+      <TransitionGroup name="vk-toast">
         <div
-          class="flex aspect-square h-10 min-w-10 items-center justify-center rounded-xl"
-          :class="kinds[toast.type].tile"
+          v-for="toast in toasts"
+          :key="toast.id"
+          data-toast
+          :data-type="toast.type"
+          :role="toast.type === 'error' ? 'alert' : undefined"
+          :class="ui.toast"
         >
-          <AppIcon :name="kinds[toast.type].icon" :size="20" color="white" />
-        </div>
-        <div
-          class="min-w-0 flex-1 text-sm leading-5 text-base-neutral-800 dark:text-base-neutral-100"
-        >
-          <ul v-if="Array.isArray(toast.message)" class="list-disc ps-5">
-            <li v-for="(line, i) in toast.message" :key="i">{{ line }}</li>
-          </ul>
-          <p v-else class="whitespace-pre-line">{{ toast.message }}</p>
-          <div class="flex gap-2">
-            <button
+          <slot name="message" :toast="toast">
+            <ul v-if="typeof toast.message !== 'string'" :class="ui.message">
+              <li v-for="(line, i) in toast.message" :key="i">{{ line }}</li>
+            </ul>
+            <p v-else :class="ui.message">{{ toast.message }}</p>
+          </slot>
+          <div v-if="toast.type === 'error' || toast.action" :class="ui.actions">
+            <AppButton
               v-if="toast.type === 'error'"
-              type="button"
-              class="mt-3 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-app-error hover:bg-app-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-app-red-800/30"
-              @click.stop="copy(toast)"
+              variant="ghost"
+              :class="ui.copy"
+              @click="copy(toast)"
             >
-              <AppIcon :name="copiedId === toast.id ? 'CopySuccess' : 'Copy'" :size="16" />
               {{ copiedId === toast.id ? messages.copied : messages.copy }}
-            </button>
-            <button
-              v-if="toast.action"
-              type="button"
-              class="mt-3 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary-orange-500 hover:bg-primary-orange-100/40 focus-visible:outline-2 focus-visible:outline-offset-2"
-              @click.stop="run(toast)"
-            >
+            </AppButton>
+            <AppButton v-if="toast.action" variant="ghost" :class="ui.action" @click="run(toast)">
               {{ toast.actionLabel ?? messages.open }}
-            </button>
+            </AppButton>
           </div>
+          <slot name="close" :toast="toast" :dismiss="() => dismissToast(toast.id)">
+            <AppButton
+              variant="ghost"
+              data-toast-close
+              :class="ui.close"
+              @click="dismissToast(toast.id)"
+            >
+              {{ messages.dismiss }}
+            </AppButton>
+          </slot>
         </div>
-        <button
-          type="button"
-          :aria-label="messages.dismiss"
-          class="grid size-8 shrink-0 place-items-center self-start rounded-lg text-base-neutral-400 hover:bg-base-neutral-100 focus-visible:outline-2 focus-visible:outline-primary-orange-500 dark:hover:bg-base-neutral-700"
-          @click.stop="dismissToast(toast.id)"
-        >
-          <AppIcon name="CloseCircle" :size="18" />
-        </button>
-      </div>
-    </TransitionGroup>
-  </section>
+      </TransitionGroup>
+    </section>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
+// Toast stack: mount once at the app root, then call useToast() from anywhere. Style each type
+// from data-type, e.g. `data-[type=error]:border-red-600` in `ui.toast`. Buttons are AppButtons
+// (`ghost` variant). Slots: `message` (gets `toast`) and `close` (gets `toast`, `dismiss`).
 import { computed, ref } from 'vue'
+import AppButton from './AppButton.vue'
 import { copyToClipboard } from '../utils/helpers'
-import AppIcon from './AppIcon.vue'
-import { dismissToast, feedbackState, type ToastKind } from './feedback'
-import type { IconName } from './icon-names'
+import { dismissToast, feedbackState } from './feedback'
 import { useVueKit } from './plugin'
+import { getTopDialog } from './overlay'
+import { useUi, type ToastsUi } from './ui'
+
+const props = defineProps<{
+  /** Classes per piece; wins over `createVueKit({ ui: { toasts } })`. */
+  ui?: ToastsUi
+}>()
 
 const { messages } = useVueKit()
+const ui = useUi('toasts', () => props.ui)
 const toasts = computed(() => feedbackState.toasts)
 const copiedId = ref<string>()
 
 type ShownToast = (typeof feedbackState.toasts)[number]
-
-const kinds: Record<ToastKind, { icon: IconName; tile: string }> = {
-  success: { icon: 'TickCircle', tile: 'bg-app-success' },
-  error: { icon: 'CloseCircle', tile: 'bg-app-error' },
-  info: { icon: 'InfoCircle', tile: 'bg-app-info' },
-  warning: { icon: 'Danger', tile: 'bg-app-warning' },
-}
 
 const run = async (toast: ShownToast) => {
   await toast.action?.()

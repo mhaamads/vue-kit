@@ -6,7 +6,7 @@ import {
   shiftDateMonth,
   toLocalISOString,
   toUtcMidnight,
-} from '@moonlinetravel/vue-kit/utils'
+} from '@mhaamads/vue-kit/utils'
 
 // Cases from portal-iq-vue's date-utils.spec.ts, plus the helpers that replace its
 // luxon-based DateBuilder and three local toLocalISOString copies.

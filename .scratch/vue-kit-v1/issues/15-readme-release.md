@@ -11,4 +11,4 @@
 - [ ] Every README code example is copied from a test or the smoke fixture, so it compiles.
 - [ ] A GitHub Action publishes to GitHub Packages when a version tag is pushed, after the full CI passes.
 - [ ] `CHANGELOG.md` has a `0.1.0` entry. The deprecation policy is written down (ADR-0009).
-- [ ] Creating `MoonlineTravel/vue-kit`, adding the remote and the first publish are **not** done here. They need the owner's go-ahead (ADR-0004).
+- [ ] Creating `mhaamads/vue-kit`, adding the remote and the first publish are **not** done here. They need the owner's go-ahead (ADR-0004).

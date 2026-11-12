@@ -7,7 +7,7 @@ import {
   isEmpty,
   validate,
   type Schema,
-} from '@moonlinetravel/vue-kit/utils'
+} from '@mhaamads/vue-kit/utils'
 
 describe('validate: empty and required', () => {
   it('returns {} for an empty schema and for valid data', () => {

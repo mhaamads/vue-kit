@@ -11,7 +11,7 @@ import {
   isPreviewableFile,
   markImageBroken,
   normalizeImageUrl,
-} from '@moonlinetravel/vue-kit/utils'
+} from '@mhaamads/vue-kit/utils'
 
 describe('colors', () => {
   it('converts hex to HSL', () => {

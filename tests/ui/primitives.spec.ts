@@ -1,35 +1,31 @@
-import { describe, expect, it, vi } from 'vitest'
-import { defineComponent, h } from 'vue'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
-import {
-  AppButton,
-  AppIcon,
-  AppText,
-  createVueKit,
-  useVueKit,
-  ZIndex,
-} from '@moonlinetravel/vue-kit/ui'
-import { defaultValidationMessages } from '@moonlinetravel/vue-kit/utils'
+import { AppButton, createVueKit, useVueKit } from '@mhaamads/vue-kit/ui'
+import { defaultValidationMessages } from '@mhaamads/vue-kit/utils'
 
-const withKit = (options = {}) => ({ global: { plugins: [createVueKit(options)] } })
+const ckb = { dir: 'rtl' as const, messages: { loading: 'بارکردن', close: 'داخستن' } }
 
-// Iconsax icons are async components: wait until the <svg> is in the DOM.
-const iconsLoaded = (wrapper: { find: (s: string) => { exists: () => boolean } }) =>
-  vi.waitFor(() => expect(wrapper.find('svg').exists()).toBe(true))
+// Renders the kit state the way a component would: destructured, read in the template.
+const Probe = defineComponent({
+  setup() {
+    const { messages, dir, locale } = useVueKit()
+    return () => h('pre', `${locale.value} ${dir.value} ${messages.loading} ${messages.close}`)
+  },
+})
+
+afterEach(() => {
+  document.documentElement.removeAttribute('lang')
+  document.documentElement.removeAttribute('dir')
+})
 
 describe('createVueKit / useVueKit', () => {
-  const Probe = defineComponent({
-    setup() {
-      const config = useVueKit()
-      return () => h('pre', JSON.stringify({ dir: config.dir, loading: config.messages.loading }))
-    },
+  it('works without the plugin: English, LTR, and leaves <html> alone', () => {
+    expect(mount(Probe).text()).toBe('en ltr Loading Close')
+    expect(document.documentElement.getAttribute('dir')).toBeNull()
   })
 
-  it('works without the plugin, with English LTR defaults', () => {
-    expect(mount(Probe).text()).toBe('{"dir":"ltr","loading":"Loading"}')
-  })
-
-  it('merges options over the defaults, including validation messages', () => {
+  it('has English only by default, plus app options', () => {
     let config!: ReturnType<typeof useVueKit>
     const Grab = defineComponent({
       setup() {
@@ -37,93 +33,102 @@ describe('createVueKit / useVueKit', () => {
         return () => null
       },
     })
-    mount(Grab, withKit({ dir: 'rtl', messages: { loading: 'بارکردن' } }))
-    expect(config.dir).toBe('rtl')
-    expect(config.messages.loading).toBe('بارکردن')
+    mount(Grab, { global: { plugins: [createVueKit()] } })
+    expect(config.availableLocales.value).toEqual(['en'])
     expect(config.messages.required('Name')).toBe(defaultValidationMessages.required('Name'))
     expect(config.devBypassValidation()).toBe(false)
-    expect(config.components).toEqual({})
+  })
+
+  it('starts in the given locale, falling back to English for missing keys', () => {
+    const kit = createVueKit({ locale: 'ckb', locales: { ckb } })
+    expect(mount(Probe, { global: { plugins: [kit] } }).text()).toBe('ckb rtl بارکردن داخستن')
+    expect(kit.messages.cancel).toBe('Cancel')
+  })
+
+  it('switches language and direction live, from inside or outside components', async () => {
+    const kit = createVueKit({ locales: { ckb } })
+    const wrapper = mount(Probe, { global: { plugins: [kit] } })
+    expect(document.documentElement.getAttribute('dir')).toBe('ltr')
+    kit.setLocale('ckb')
+    await nextTick()
+    expect(wrapper.text()).toBe('ckb rtl بارکردن داخستن')
+    expect(document.documentElement.getAttribute('lang')).toBe('ckb')
+    expect(document.documentElement.getAttribute('dir')).toBe('rtl')
+    kit.setLocale('en')
+    await nextTick()
+    expect(wrapper.text()).toBe('en ltr Loading Close')
+  })
+
+  it('adds a language at runtime (e.g. lazy-loaded) and can re-word English', async () => {
+    const kit = createVueKit({ locales: { en: { messages: { close: 'Back' } } } })
+    const wrapper = mount(Probe, { global: { plugins: [kit] } })
+    expect(wrapper.text()).toBe('en ltr Loading Back')
+    kit.addLocale('ckb', ckb)
+    expect(kit.availableLocales.value).toEqual(['en', 'ckb'])
+    kit.setLocale('ckb')
+    kit.addLocale('ckb', { messages: { close: 'گەڕانەوە' } })
+    await nextTick()
+    expect(wrapper.text()).toBe('ckb rtl بارکردن گەڕانەوە')
+  })
+
+  it('warns and stays put on an unknown locale; syncDocument: false leaves <html> alone', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const kit = createVueKit({ syncDocument: false })
+    mount(Probe, { global: { plugins: [kit] } })
+    kit.setLocale('fr')
+    expect(warn).toHaveBeenCalledWith('[vue-kit] Unknown locale "fr"')
+    expect(kit.locale.value).toBe('en')
+    expect(document.documentElement.getAttribute('dir')).toBeNull()
+    warn.mockRestore()
   })
 })
 
-describe('AppText', () => {
-  it('renders the tag with size, weight and colour classes', () => {
-    const wrapper = mount(AppText, {
-      props: { tag: 'h2', size: '24', weight: 'bold', color: 'error' },
-      slots: { default: 'Hello' },
+describe('AppButton (headless)', () => {
+  it('takes its look from createVueKit({ ui: { button } }) by variant, plus its own class', () => {
+    const plugins = [
+      createVueKit({ ui: { button: { default: 'btn', primary: 'btn btn-primary' } } }),
+    ]
+    expect(mount(AppButton, { global: { plugins } }).classes()).toEqual(['btn'])
+    const primary = mount(AppButton, {
+      props: { variant: 'primary' },
+      attrs: { class: 'w-full' },
+      global: { plugins },
     })
-    expect(wrapper.element.tagName).toBe('H2')
-    expect(wrapper.text()).toBe('Hello')
-    expect(wrapper.classes()).toEqual(
-      expect.arrayContaining(['lg:text-2xl', 'text-xl', 'font-bold', 'text-app-error']),
-    )
+    expect(primary.classes()).toEqual(['w-full', 'btn', 'btn-primary'])
   })
 
-  it('lets the caller class win over a default of the same kind', () => {
-    const wrapper = mount(AppText, { attrs: { class: 'font-light', id: 't' } })
-    expect(wrapper.classes()).toContain('font-light')
-    expect(wrapper.classes()).not.toContain('font-normal')
-    expect(wrapper.attributes('id')).toBe('t')
-  })
-})
-
-describe('AppIcon', () => {
-  it('renders the Iconsax icon, hidden from screen readers, in currentColor by default', async () => {
-    const wrapper = mount(AppIcon, { props: { name: 'Add', size: 18 } })
-    await iconsLoaded(wrapper)
-    const svg = wrapper.find('svg')
-    expect(svg.exists()).toBe(true)
-    expect(svg.attributes('width')).toBe('18')
-    expect(wrapper.html()).toContain('currentColor')
-    expect(wrapper.attributes('aria-hidden')).toBe('true')
-  })
-})
-
-describe('AppButton', () => {
-  it('is a type="button" by default, with text and variant classes', () => {
-    const wrapper = mount(AppButton, { props: { text: 'Save' } })
+  it('is a plain type="button" with no classes; the slot is the content', () => {
+    const wrapper = mount(AppButton, { slots: { default: 'Save' } })
     expect(wrapper.element.tagName).toBe('BUTTON')
     expect(wrapper.attributes('type')).toBe('button')
+    expect(wrapper.attributes('class')).toBeUndefined()
     expect(wrapper.text()).toBe('Save')
-    expect(wrapper.classes()).toEqual(expect.arrayContaining(['from-primary-orange-500', 'h-12']))
   })
 
-  it('keeps an explicit type and other attrs, and merges the caller class', () => {
-    const wrapper = mount(AppButton, {
-      props: { size: '40' },
-      attrs: { type: 'submit', class: 'h-14', 'data-x': '1' },
-    })
+  it('passes class, type and attrs through', () => {
+    const wrapper = mount(AppButton, { attrs: { type: 'submit', class: 'btn', 'data-x': '1' } })
     expect(wrapper.attributes('type')).toBe('submit')
+    expect(wrapper.classes()).toEqual(['btn'])
     expect(wrapper.attributes('data-x')).toBe('1')
-    expect(wrapper.classes()).toContain('h-14')
-    expect(wrapper.classes()).not.toContain('h-10')
   })
 
-  it('fires click once, and not when disabled', async () => {
-    const clicks: number[] = []
-    const onClick = () => clicks.push(1)
-    const enabled = mount(AppButton, { attrs: { onClick } })
-    await enabled.trigger('click')
-    expect(clicks).toHaveLength(1)
-
-    const disabled = mount(AppButton, { props: { disabled: true }, attrs: { onClick } })
-    expect(disabled.attributes('disabled')).toBeDefined()
-  })
-
-  it('shows a spinner with an announced label while loading, and is disabled', () => {
+  it('loading: disabled, aria-busy and data-loading; the slot gets `loading`', () => {
     const wrapper = mount(AppButton, {
-      props: { text: 'Save', loading: true },
-      ...withKit({ messages: { loading: 'Saving…' } }),
+      props: { loading: true },
+      slots: { default: ({ loading }: { loading: boolean }) => (loading ? 'Saving…' : 'Save') },
     })
     expect(wrapper.attributes('disabled')).toBeDefined()
     expect(wrapper.attributes('aria-busy')).toBe('true')
-    expect(wrapper.find('svg').attributes('aria-hidden')).toBe('true')
-    expect(wrapper.find('.sr-only').text()).toBe('Saving…')
-    expect(wrapper.text()).not.toContain('Save ')
+    expect(wrapper.attributes('data-loading')).toBe('')
+    expect(wrapper.text()).toBe('Saving…')
+  })
+
+  it('disabled sets data-disabled for styling', () => {
+    expect(mount(AppButton, { props: { disabled: true } }).attributes('data-disabled')).toBe('')
   })
 
   it('renders an <a href> for `to` when no RouterLink is registered', () => {
-    const wrapper = mount(AppButton, { props: { to: '/tasks', text: 'Tasks' } })
+    const wrapper = mount(AppButton, { props: { to: '/tasks' } })
     expect(wrapper.element.tagName).toBe('A')
     expect(wrapper.attributes('href')).toBe('/tasks')
     expect(wrapper.attributes('type')).toBeUndefined()
@@ -145,40 +150,15 @@ describe('AppButton', () => {
   })
 
   it('marks a disabled link with aria-disabled', () => {
-    const wrapper = mount(AppButton, { props: { to: '/x', disabled: true } })
-    expect(wrapper.attributes('aria-disabled')).toBe('true')
+    expect(
+      mount(AppButton, { props: { to: '/x', disabled: true } }).attributes('aria-disabled'),
+    ).toBe('true')
   })
 
-  it('places the icon with logical spacing: me-2 at the start, ms-2 at the end (mirrors in RTL)', async () => {
-    const start = mount(AppButton, { props: { icon: 'Add', text: 'Add' } })
-    await iconsLoaded(start)
-    expect(start.find('svg').classes()).toContain('me-2')
-    const end = mount(AppButton, { props: { icon: 'Add', text: 'Add', iconPosition: 'end' } })
-    await iconsLoaded(end)
-    expect(end.classes()).toContain('flex-row-reverse')
-    expect(end.find('svg').classes()).toContain('ms-2')
-  })
-
-  it('warns in dev about an icon-only button without an accessible name', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    mount(AppButton, { props: { icon: 'Trash', aspect: 'square' } })
-    expect(warn).toHaveBeenCalledTimes(1)
-    mount(AppButton, { props: { icon: 'Trash' }, attrs: { 'aria-label': 'Delete' } })
-    mount(AppButton, { props: { icon: 'Trash', text: 'Delete' } })
-    mount(AppButton, { props: { icon: 'Trash' }, slots: { default: 'Delete' } })
-    expect(warn).toHaveBeenCalledTimes(1)
-    warn.mockRestore()
-  })
-
-  it('applies active classes for the variant', () => {
-    const wrapper = mount(AppButton, { props: { variant: 'outline', active: true } })
-    expect(wrapper.classes()).toContain('border-primary-orange-500!')
-  })
-})
-
-describe('ZIndex', () => {
-  it('names the z-* utilities defined in theme.css', () => {
-    expect(ZIndex.TOASTS).toBe('z-toasts')
-    expect(ZIndex.DIALOG_1).toBe('z-dialog-1')
+  it('fires click once', async () => {
+    const clicks: number[] = []
+    const wrapper = mount(AppButton, { attrs: { onClick: () => clicks.push(1) } })
+    await wrapper.trigger('click')
+    expect(clicks).toHaveLength(1)
   })
 })

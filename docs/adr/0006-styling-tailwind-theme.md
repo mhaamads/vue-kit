@@ -1,6 +1,6 @@
 # 0006. Styling: Tailwind v4 classes plus a shipped theme.css
 
-Status: Accepted (2026-11-11)
+Status: Superseded by ADR-0012 (2026-11-12). Was accepted 2026-11-11.
 
 ## Context
 

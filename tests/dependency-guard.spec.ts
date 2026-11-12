@@ -3,17 +3,9 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import pkg from '../package.json' with { type: 'json' }
 
-// ADR-0011. Changing this list needs a new ADR.
-const ALLOWED = [
-  'vue',
-  'maska',
-  '@floating-ui/vue',
-  'tailwind-merge',
-  'vue-iconsax',
-  '@iconify/vue',
-  '@vueuse/core',
-  'vue-virtual-scroller',
-]
+// ADR-0012 (replaces ADR-0011's list). Changing it needs a new ADR.
+// @vuepic/vue-datepicker: the owner chose portal's date picker for AppDateInput (ADR-0015).
+const ALLOWED = ['vue', 'maska', '@floating-ui/vue', '@vueuse/core', '@vuepic/vue-datepicker']
 
 const srcDir = join(import.meta.dirname, '..', 'src')
 const files = readdirSync(srcDir, { recursive: true, encoding: 'utf8' })

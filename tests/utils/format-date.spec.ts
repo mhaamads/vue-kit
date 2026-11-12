@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DATE_TIME_FORMAT, formatDate } from '@moonlinetravel/vue-kit/utils'
+import { DATE_TIME_FORMAT, formatDate } from '@mhaamads/vue-kit/utils'
 
 // Local-time inputs keep the expectations independent of the machine's time zone.
 const afternoon = new Date(2026, 0, 5, 14, 7)

@@ -62,6 +62,12 @@ function run(
     const value = data[field]
     const { label } = rules
 
+    // "Must be ticked" (e.g. accept the terms): only `true` passes, empty or not.
+    if (rules.accepted && value !== true) {
+      errors[field] = [m.accepted(label)]
+      continue
+    }
+
     if (isEmpty(value)) {
       if (rules.required) errors[field] = [m.required(label)]
       continue

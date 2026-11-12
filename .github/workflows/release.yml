@@ -1,0 +1,31 @@
+name: Release
+
+# Publishes to GitHub Packages when a version tag is pushed: git tag v0.1.0 && git push --tags
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@mhaamads'
+      - run: npm ci
+      # The tag must match package.json, so a release can't ship the wrong version.
+      - run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm run type-check
+      - run: npm run lint
+      - run: npm test
+      - run: npm run smoke
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

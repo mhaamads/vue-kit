@@ -14,7 +14,7 @@ import {
   useGlobalEvent,
   useGlobalEventRef,
   waitForEvent,
-} from '@moonlinetravel/vue-kit/utils'
+} from '@mhaamads/vue-kit/utils'
 
 afterEach(() => globalEvents.clear())
 

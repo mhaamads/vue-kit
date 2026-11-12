@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import { createHttpClient, HttpError } from '@moonlinetravel/vue-kit/http'
+import { createHttpClient, HttpError } from '@mhaamads/vue-kit/http'
 
 it('calls fetch and throws HttpError from the installed package', async () => {
   vi.stubGlobal(

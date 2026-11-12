@@ -3,6 +3,7 @@ const name = (field?: string) => field ?? 'Value'
 /** English validation messages. Override any of them via `validate(..., { messages })`. */
 export const defaultValidationMessages = {
   required: (field?: string) => `${name(field)} is required.`,
+  accepted: (field?: string) => `${name(field)} must be accepted.`,
   type: (expected: string, field?: string) => `${name(field)} must be a ${expected}.`,
   isEmail: (field?: string) => `${name(field)} must be a valid email.`,
   isUrl: (field?: string) => `${name(field)} must be a valid URL.`,

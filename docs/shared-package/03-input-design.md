@@ -1,4 +1,8 @@
-# 03 — Input system design (`@moonlinetravel/vue-kit/ui`)
+# 03 — Input system design (`@mhaamads/vue-kit/ui`)
+
+> **Superseded in part by ADR-0014 (2026-11-12):** the four override levels below (part slots, default slot, `createVueKit({ components })`, `rootClass`) are gone. Each component is styled with a `ui` class map, per component or app-wide in `createVueKit({ ui })`. The composables and their behaviour described here still apply.
+
+> **Update 2026-11-12 (ADR-0012):** the package is headless. The "default skin" in this document is now **unstyled default markup** with `data-*` hooks; every visual prop (`icon*`, `rounded`, `onLabel` / `offLabel`, button `variant` / `size` / `radius`) moved to the example skin in Storybook (`stories/skin/`). The composable APIs, slots and override levels below are unchanged; `useField` adds `dataAttrs`.
 
 Phase 4. Status: **approved 2026-11-11, with ADR-0010:** no heavy UI libraries. Follows ADR-0001 to ADR-0010 in [docs/adr/](../adr/) and items A4, A5, I3, I4, R4 in [02-research.md](02-research.md).
 
@@ -27,13 +31,13 @@ v1.x (not in ADR-0005): `useFileInput` / `<AppFileUpload>`, and `<AppColorInput>
 import type { MaybeRefOrGetter, Ref, ComputedRef } from 'vue'
 
 type UseFieldOptions<T> = {
-  model: Ref<T>                                  // the component's defineModel()
-  id?: MaybeRefOrGetter<string | undefined>      // falls back to useId()
+  model: Ref<T> // the component's defineModel()
+  id?: MaybeRefOrGetter<string | undefined> // falls back to useId()
   errors?: MaybeRefOrGetter<string[] | undefined>
   required?: MaybeRefOrGetter<boolean | undefined>
   disabled?: MaybeRefOrGetter<boolean | undefined>
   readonly?: MaybeRefOrGetter<boolean | undefined>
-  hasHint?: MaybeRefOrGetter<boolean>            // adds the hint id to aria-describedby
+  hasHint?: MaybeRefOrGetter<boolean> // adds the hint id to aria-describedby
 }
 
 type FieldApi<T> = {
@@ -41,22 +45,23 @@ type FieldApi<T> = {
   value: Ref<T>
   setValue: (v: T) => void
   errors: ComputedRef<string[]>
-  error: ComputedRef<string | undefined>         // first error
+  error: ComputedRef<string | undefined> // first error
   invalid: ComputedRef<boolean>
-  touched: Ref<boolean>                          // set on first blur
-  dirty: ComputedRef<boolean>                    // value !== value at mount / last reset()
-  reset: (value?: T) => void                     // with a value: new baseline (e.g. after loading a record)
+  touched: Ref<boolean> // set on first blur
+  dirty: ComputedRef<boolean> // value !== value at mount / last reset()
+  reset: (value?: T) => void // with a value: new baseline (e.g. after loading a record)
   disabled: ComputedRef<boolean>
   readonly: ComputedRef<boolean>
   required: ComputedRef<boolean>
   labelProps: ComputedRef<{ id: string; for: string }>
   hintProps: ComputedRef<{ id: string }>
   errorProps: ComputedRef<{ id: string; role: 'alert' }>
-  controlAria: ComputedRef<{                     // spread onto the real control
+  controlAria: ComputedRef<{
+    // spread onto the real control
     id: string
     'aria-invalid': 'true' | undefined
     'aria-required': 'true' | undefined
-    'aria-describedby': string | undefined       // "<id>-hint <id>-error" when present
+    'aria-describedby': string | undefined // "<id>-hint <id>-error" when present
     disabled: boolean
     readonly: boolean
   }>
@@ -72,27 +77,27 @@ type FieldApi<T> = {
 
 ### Props (component)
 
-| Prop | Type | Default | Today | Notes |
-|---|---|---|---|---|
-| `v-model` | `string \| number \| null` | — | same | `number` when `type="number"` (parsed) |
-| `v-model:code` | `string` | — | same | country dial code, only for `type="tel"` |
-| `id` | `string` | `useId()` | required | |
-| `label` | `string` | — | same | |
-| `hint` | `string` | — | — (new) | |
-| `errors` | `string[]` | — | same | |
-| `type` | `InputTypeHTMLAttribute` | `'text'` | same | |
-| `as` | `'input' \| 'textarea'` | `'input'` | `tag` | renamed (vue-kit has no consumers yet, so no alias needed) |
-| `required` / `disabled` / `readonly` | `boolean` | `false` | `disabled` via attrs | |
-| `mask` | `InputMaskType` (maska) | — | same | |
-| `acceptOnly` | `'numbers' \| 'letters' \| 'alphanumeric'` | — | same | |
-| `capitalize` | `'first' \| 'each'` | — | same | |
-| `displayValue` | `string` | — | same | |
-| `icon` / `iconPosition` / `iconConfig` | as today | `'start'` | same | default skin only |
-| `copyable` / `copyValue` | `boolean` / `string \| number` | — | `hasCopy` | renamed |
-| `rounded` | `'full' \| 'lg' \| 'xl'` | `'xl'` | same | default skin only |
-| `rootClass` | `string` | — | — | the wrapper's class, since `class` now goes to `<input>` |
-| `v-model:code` dial-code `<select>` | native, labels `IQ +964` | — | custom dropdown | `codeProps` binds any native select |
-| ~~`classList`~~, ~~`labelClassList`~~ | | | | removed (R4): use `class` and the `label` slot |
+| Prop                                   | Type                                       | Default   | Today                | Notes                                                      |
+| -------------------------------------- | ------------------------------------------ | --------- | -------------------- | ---------------------------------------------------------- |
+| `v-model`                              | `string \| number \| null`                 | —         | same                 | `number` when `type="number"` (parsed)                     |
+| `v-model:code`                         | `string`                                   | —         | same                 | country dial code, only for `type="tel"`                   |
+| `id`                                   | `string`                                   | `useId()` | required             |                                                            |
+| `label`                                | `string`                                   | —         | same                 |                                                            |
+| `hint`                                 | `string`                                   | —         | — (new)              |                                                            |
+| `errors`                               | `string[]`                                 | —         | same                 |                                                            |
+| `type`                                 | `InputTypeHTMLAttribute`                   | `'text'`  | same                 |                                                            |
+| `as`                                   | `'input' \| 'textarea'`                    | `'input'` | `tag`                | renamed (vue-kit has no consumers yet, so no alias needed) |
+| `required` / `disabled` / `readonly`   | `boolean`                                  | `false`   | `disabled` via attrs |                                                            |
+| `mask`                                 | `InputMaskType` (maska)                    | —         | same                 |                                                            |
+| `acceptOnly`                           | `'numbers' \| 'letters' \| 'alphanumeric'` | —         | same                 |                                                            |
+| `capitalize`                           | `'first' \| 'each'`                        | —         | same                 |                                                            |
+| `displayValue`                         | `string`                                   | —         | same                 |                                                            |
+| `icon` / `iconPosition` / `iconConfig` | as today                                   | `'start'` | same                 | default skin only                                          |
+| `copyable` / `copyValue`               | `boolean` / `string \| number`             | —         | `hasCopy`            | renamed                                                    |
+| `rounded`                              | `'full' \| 'lg' \| 'xl'`                   | `'xl'`    | same                 | default skin only                                          |
+| `rootClass`                            | `string`                                   | —         | —                    | the wrapper's class, since `class` now goes to `<input>`   |
+| `v-model:code` dial-code `<select>`    | native, labels `IQ +964`                   | —         | custom dropdown      | `codeProps` binds any native select                        |
+| ~~`classList`~~, ~~`labelClassList`~~  |                                            |           |                      | removed (R4): use `class` and the `label` slot             |
 
 ### Emits
 
@@ -102,23 +107,29 @@ type FieldApi<T> = {
 
 ```ts
 type TextInputApi = FieldApi<string | number | null> & {
-  displayValue: ComputedRef<string>           // masked / displayValue prop
+  displayValue: ComputedRef<string> // masked / displayValue prop
   showPassword: Ref<boolean>
   togglePassword: () => void
-  code: Ref<string | undefined>               // tel dial code
+  code: Ref<string | undefined> // tel dial code
   setCode: (c: string) => void
-  inputProps: ComputedRef<FieldApi['controlAria'] & {
-    type: string                               // 'text' while password is shown
-    value: string
-    placeholder?: string
-    onInput: (e: Event) => void                // acceptOnly → capitalize → mask → parse → model;
-                                               // textarea auto-resize; Chrome tel re-render fix
-    onFocus: (e: FocusEvent) => void           // re-normalise (today's onFocus)
-    onBlur: () => void
-  }>
-  toggleProps: ComputedRef<{                   // the password eye button
-    type: 'button'; 'aria-label': string; 'aria-pressed': boolean
-    'aria-controls': string; onClick: () => void
+  inputProps: ComputedRef<
+    FieldApi['controlAria'] & {
+      type: string // 'text' while password is shown
+      value: string
+      placeholder?: string
+      onInput: (e: Event) => void // acceptOnly → capitalize → mask → parse → model;
+      // textarea auto-resize; Chrome tel re-render fix
+      onFocus: (e: FocusEvent) => void // re-normalise (today's onFocus)
+      onBlur: () => void
+    }
+  >
+  toggleProps: ComputedRef<{
+    // the password eye button
+    type: 'button'
+    'aria-label': string
+    'aria-pressed': boolean
+    'aria-controls': string
+    onClick: () => void
   }>
 }
 ```
@@ -127,26 +138,26 @@ All of today's `Input.vue` logic moves into `onInput` / `onFocus`: `normalizeInp
 
 ### Slots
 
-| Slot | Slot props |
-|---|---|
-| `label` | `{ labelProps, label, required }` |
-| `prefix` | `{ field }` (`field` = the whole `TextInputApi`) |
-| `suffix` | `{ field }`. Replaces the built-in copy / password buttons when given |
-| `hint` | `{ hintProps, hint }` |
-| `error` | `{ errorProps, errors, error }` |
-| `default` | the whole `TextInputApi`. Replaces the full markup (level 3) |
+| Slot      | Slot props                                                            |
+| --------- | --------------------------------------------------------------------- |
+| `label`   | `{ labelProps, label, required }`                                     |
+| `prefix`  | `{ field }` (`field` = the whole `TextInputApi`)                      |
+| `suffix`  | `{ field }`. Replaces the built-in copy / password buttons when given |
+| `hint`    | `{ hintProps, hint }`                                                 |
+| `error`   | `{ errorProps, errors, error }`                                       |
+| `default` | the whole `TextInputApi`. Replaces the full markup (level 3)          |
 
 ## 3. The other v1 inputs, in short
 
 Each one is `FieldApi<T>` plus the members below, with the same slot pattern: part slots plus a default full-override slot that receives the whole API.
 
-| Composable | Extra state / actions | Prop getters | Kept from today |
-|---|---|---|---|
-| `useSelect<T>` | `open`, `toggle()`, `close()`, `query` (`v-model:query`), `filteredOptions`, `isSelected(o)`, `select(o)`, `remove(o)`, `activeIndex`, `loading` | `triggerProps` (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, key handlers ↑ ↓ Enter Esc Home End), `listboxProps` (`role="listbox"`, `aria-multiselectable`), `optionProps(o, i)` (`role="option"`, `aria-selected`, id) | `multiple`, `searchable`, `lazy` + `isOptionsReady`, `optionsUnselectable`, `selectedOptionsLimit`, `defaultSearchText`, slots `trigger`, `option`, `no-results-found`. Floating position (`@floating-ui/vue`) and virtual list (`@tanstack/vue-virtual`) stay in the **default skin** |
-| `useChoice` | `checked`, `toggle()`, `trueValue` / `falseValue` | `inputProps` (native `type="checkbox"`; `role="switch"` for `AppSwitch`) | Checkbox `value`, `description`. Switch `options` (two-label tabs) is a skin variant |
-| `useChoiceGroup` | `options`, `isSelected(o)`, `select(o)`, `name` | `groupProps` (`role="radiogroup"` / `group`, `aria-labelledby`), `itemProps(o)` (native radio / checkbox) | `direction`, `selectFirstOption`, `allowSelectionRemoval`. Arrow-key movement comes free from native radios |
-| `useDateInput` | `hasValue`, `clear()`, `mode` (`date` / `datetime` / `month` / `week`), `range` (start + end), model normalising (Date or string in, the same shape out as today) | `inputProps` (single), `startProps` / `endProps` (range: end's `min` = start value, start's `max` = end value) | `minDate` / `maxDate` → native `min` / `max`; `required`, `disabled`, `clearable`, `range`, `monthPicker`, `weekPicker` |
-| `useTimeInput` | `hours`, `minutes`, `period`, `options` (from `minuteStep`, `min/maxTime`, `format`), `presets`, `clear()` | `columnProps`, `optionProps` | Today's `{ hours, minutes }` model |
+| Composable       | Extra state / actions                                                                                                                                             | Prop getters                                                                                                                                                                                                                                              | Kept from today                                                                                                                                                                                                                                                                        |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useSelect<T>`   | `open`, `toggle()`, `close()`, `query` (`v-model:query`), `filteredOptions`, `isSelected(o)`, `select(o)`, `remove(o)`, `activeIndex`, `loading`                  | `triggerProps` (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, key handlers ↑ ↓ Enter Esc Home End), `listboxProps` (`role="listbox"`, `aria-multiselectable`), `optionProps(o, i)` (`role="option"`, `aria-selected`, id) | `multiple`, `searchable`, `lazy` + `isOptionsReady`, `optionsUnselectable`, `selectedOptionsLimit`, `defaultSearchText`, slots `trigger`, `option`, `no-results-found`. Floating position (`@floating-ui/vue`) and virtual list (`@tanstack/vue-virtual`) stay in the **default skin** |
+| `useChoice`      | `checked`, `toggle()`, `trueValue` / `falseValue`                                                                                                                 | `inputProps` (native `type="checkbox"`; `role="switch"` for `AppSwitch`)                                                                                                                                                                                  | Checkbox `value`, `description`. Switch `options` (two-label tabs) is a skin variant                                                                                                                                                                                                   |
+| `useChoiceGroup` | `options`, `isSelected(o)`, `select(o)`, `name`                                                                                                                   | `groupProps` (`role="radiogroup"` / `group`, `aria-labelledby`), `itemProps(o)` (native radio / checkbox)                                                                                                                                                 | `direction`, `selectFirstOption`, `allowSelectionRemoval`. Arrow-key movement comes free from native radios                                                                                                                                                                            |
+| `useDateInput`   | `hasValue`, `clear()`, `mode` (`date` / `datetime` / `month` / `week`), `range` (start + end), model normalising (Date or string in, the same shape out as today) | `inputProps` (single), `startProps` / `endProps` (range: end's `min` = start value, start's `max` = end value)                                                                                                                                            | `minDate` / `maxDate` → native `min` / `max`; `required`, `disabled`, `clearable`, `range`, `monthPicker`, `weekPicker`                                                                                                                                                                |
+| `useTimeInput`   | `hours`, `minutes`, `period`, `options` (from `minuteStep`, `min/maxTime`, `format`), `presets`, `clear()`                                                        | `columnProps`, `optionProps`                                                                                                                                                                                                                              | Today's `{ hours, minutes }` model                                                                                                                                                                                                                                                     |
 
 **Known ceiling: date (ADR-0010).** The calendar is the browser's native picker. Today's `@vuepic/vue-datepicker` features have no native equivalent and are **dropped**:
 
@@ -171,8 +182,15 @@ Same API as today's `Form.vue`: `formData`, `schema`, `@submit`, the default slo
 `defineOptions({ inheritAttrs: false })`. `class`, `style`, native attributes and listeners land once, on the real control.
 
 ```vue
-<AppInput v-model="name" label="Name" class="font-mono" maxlength="50"
-  autocomplete="name" @keydown.enter="save" root-class="w-1/2" />
+<AppInput
+  v-model="name"
+  label="Name"
+  class="font-mono"
+  maxlength="50"
+  autocomplete="name"
+  @keydown.enter="save"
+  root-class="w-1/2"
+/>
 ```
 
 ### Level 2 — part slots
@@ -201,14 +219,17 @@ Same masking, normalising, ids and ARIA as the default skin, because all of it i
 ### Level 4 — global override (plugin)
 
 ```ts
-import { createVueKit } from '@moonlinetravel/vue-kit'
+import { createVueKit } from '@mhaamads/vue-kit'
 import MyInput from './MyInput.vue'
 
-app.use(createVueKit({
-  dir: 'ltr',
-  messages: { required: 'This field is required', togglePassword: 'Show password' },
-  components: { Input: MyInput },          // also Select, Checkbox, Switch, RadioGroup, DateInput, TimeInput
-}))
+app.use(
+  createVueKit({
+    locales: {
+      en: { messages: { required: (field) => `${field} is required`, showPassword: 'Show' } },
+    }, // ADR-0008 amendment
+    components: { Input: MyInput }, // also Select, Checkbox, Switch, RadioGroup, DateInput, TimeInput
+  }),
+)
 ```
 
 `<AppInput>` always runs `useTextInput()` itself. If a global override is registered, it renders that component with one prop, `field: TextInputField` (the API wrapped in `reactive()`, so refs are unwrapped: `field.inputProps`, not `.value`; the same object the default slot receives), and passes its slots through. A default slot on the instance (level 3) wins over the global override:
@@ -216,7 +237,7 @@ app.use(createVueKit({
 ```vue
 <!-- MyInput.vue -->
 <script setup lang="ts">
-import type { TextInputApi } from '@moonlinetravel/vue-kit/ui'
+import type { TextInputApi } from '@mhaamads/vue-kit/ui'
 defineProps<{ field: TextInputApi }>()
 </script>
 <template>
@@ -238,12 +259,14 @@ One suite per input, run against three UIs:
 
 ```ts
 const uis = [
-  ['default', DefaultHarness],            // <AppInput v-bind="props" />
-  ['slot override', SlotHarness],         // level 3: bare label / input / error
-  ['global override', PluginHarness],     // level 4: MyInput via createVueKit
+  ['default', DefaultHarness], // <AppInput v-bind="props" />
+  ['slot override', SlotHarness], // level 3: bare label / input / error
+  ['global override', PluginHarness], // level 4: MyInput via createVueKit
 ] as const
 
-describe.each(uis)('AppInput (%s)', (_, Harness) => { /* … */ })
+describe.each(uis)('AppInput (%s)', (_, Harness) => {
+  /* … */
+})
 ```
 
 Cases for `AppInput` (each one maps to today's behaviour or a finding):

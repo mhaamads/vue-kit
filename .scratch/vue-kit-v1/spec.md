@@ -6,7 +6,7 @@ Decisions: ADR-0001 to ADR-0010 (`docs/adr/`). Design: `docs/shared-package/03-i
 
 ## Problem Statement
 
-Moonline is about to build new Vue apps. The code they will need lives only inside portal-iq-vue: the HTTP client, form validation, dates and colours, buttons, dialogs, toasts and the whole form-input set. It is tangled with that app's Pinia stores, auto-imports, auth flow and DevExtreme, so a new app cannot reuse it without copying. Copying would also carry over bugs the audit found:
+The team is about to build new Vue apps. The code they will need lives only inside portal-iq-vue: the HTTP client, form validation, dates and colours, buttons, dialogs, toasts and the whole form-input set. It is tangled with that app's Pinia stores, auto-imports, auth flow and DevExtreme, so a new app cannot reuse it without copying. Copying would also carry over bugs the audit found:
 
 - server error text rendered as raw HTML in toasts
 - success toasts that never show
@@ -19,7 +19,7 @@ App developers also need to restyle and restructure inputs per app without losin
 
 ## Solution
 
-A private, compiled, versioned library, `@moonlinetravel/vue-kit`, in its own repo, published to GitHub Packages. A new app installs it, adds one plugin and two CSS lines, and gets:
+A private, compiled, versioned library, `@mhaamads/vue-kit`, in its own repo, published to GitHub Packages. A new app installs it, adds one plugin and two CSS lines, and gets:
 
 - `./utils`: validation (`defineSchema` / `validate`), date, colour and image helpers, an event bus, and generic types.
 - `./http`: a `fetch`-based client. Base URLs, headers, auth refresh and error handling are configured by the app instead of hard-wired to one app's stores.
@@ -31,7 +31,7 @@ The behaviour is ported from portal-iq-vue and proven by tests in vue-kit. The k
 
 ### Installing and setting up
 
-1. As an app developer, I want to install vue-kit from our private GitHub Packages registry with one `.npmrc` line, so that the code stays private to Moonline.
+1. As an app developer, I want to install vue-kit from our private GitHub Packages registry with one `.npmrc` line, so that the code stays private to the team.
 2. As an app developer, I want vue-kit to declare `vue` as a peer dependency, so that my app and the kit share one Vue instance.
 3. As an app developer, I want vue-kit not to require Pinia, vue-router, DevExtreme, a date-picker or a rich-text editor, so that my app's bundle and licences stay mine to choose.
 4. As an app developer, I want to register the kit with one `app.use(createVueKit(options))` call, so that setup is a single place.
@@ -149,7 +149,7 @@ The behaviour is ported from portal-iq-vue and proven by tests in vue-kit. The k
 ## Implementation Decisions
 
 **Repository and package**
-- `MoonlineTravel/vue-kit`, private. npm name `@moonlinetravel/vue-kit`, published to `npm.pkg.github.com` (ADR-0003, ADR-0004).
+- `mhaamads/vue-kit`, private. npm name `@mhaamads/vue-kit`, published to `npm.pkg.github.com` (ADR-0003, ADR-0004).
 - Subpath exports `./utils`, `./http`, `./ui` and `./theme.css`. No root barrel that re-exports everything. Inside the package, modules import each other directly, not through barrels.
 - Vite library mode, ESM only, preserving modules for tree-shaking. Types from `vue-tsc` declaration emit. `vue` is externalised and declared as a `peerDependency`.
 - Runtime dependencies are exactly the allow-list: `maska`, `@floating-ui/vue`, `tailwind-merge`, `vue-iconsax`. Plus `@iconify/vue`, `@vueuse/core` and `vue-virtual-scroller`, approved for ADR-0011. No Pinia, no vue-router, no DevExtreme, date-picker, Tiptap, colour picker or lightbox (ADR-0010).
@@ -193,7 +193,7 @@ The behaviour is ported from portal-iq-vue and proven by tests in vue-kit. The k
 ## Testing Decisions
 
 **What makes a good test here:**
-- Tests import only from the public entry points (`@moonlinetravel/vue-kit/utils`, `/http`, `/ui`), never internal files. They assert what a consumer can observe: return values, thrown `HttpError`s, requests sent, DOM, ARIA attributes, emitted `v-model` updates and focus.
+- Tests import only from the public entry points (`@mhaamads/vue-kit/utils`, `/http`, `/ui`), never internal files. They assert what a consumer can observe: return values, thrown `HttpError`s, requests sent, DOM, ARIA attributes, emitted `v-model` updates and focus.
 - No assertions on internal refs, private helpers, class names or call counts of internals.
 - One seam (the public API) and two observation points: the stubbed global `fetch` for `./http`, and the rendered DOM through the installed plugin for `./ui`.
 - Ported behaviour is pinned by a test that states the portal-iq-vue behaviour it reproduces. For example: masks, accept-only filters and capitalisation give the same output as portal-iq-vue's input.

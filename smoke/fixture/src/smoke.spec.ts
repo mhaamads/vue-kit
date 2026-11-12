@@ -5,7 +5,7 @@ import {
   formatDate,
   validate,
   type FormErrors,
-} from '@moonlinetravel/vue-kit/utils'
+} from '@mhaamads/vue-kit/utils'
 
 it('imports and runs formatDate from the installed package', () => {
   expect(formatDate(new Date(2026, 0, 5, 14, 7), DATE_TIME_FORMAT)).toBe('05 Jan 2026, 02:07 PM')
@@ -22,7 +22,7 @@ it('validates a schema through the installed package', () => {
 })
 
 it('runs the vue-based event bus against the app’s own vue (peer dependency)', async () => {
-  const { broadcastEvent, useGlobalEvent } = await import('@moonlinetravel/vue-kit/utils')
+  const { broadcastEvent, useGlobalEvent } = await import('@mhaamads/vue-kit/utils')
   const seen: unknown[] = []
   const off = useGlobalEvent('saved', (p) => seen.push(p))
   broadcastEvent('saved', { id: 1 })

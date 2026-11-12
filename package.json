@@ -1,12 +1,10 @@
 {
-  "name": "@moonlinetravel/vue-kit",
-  "version": "0.0.0",
-  "description": "Shared Vue 3 utilities, HTTP client and overridable inputs for Moonline apps",
+  "name": "@mhaamads/vue-kit",
+  "version": "0.1.0",
+  "description": "Shared Vue 3 utilities, HTTP client and overridable inputs for Vue 3 apps",
   "license": "UNLICENSED",
   "type": "module",
-  "sideEffects": [
-    "**/*.css"
-  ],
+  "sideEffects": false,
   "files": [
     "dist"
   ],
@@ -22,40 +20,42 @@
     "./ui": {
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js"
-    },
-    "./theme.css": "./dist/theme.css"
+    }
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonlineTravel/vue-kit.git"
+    "url": "git+https://github.com/mhaamads/vue-kit.git"
   },
   "engines": {
     "node": ">=20.19"
   },
   "scripts": {
-    "build": "rm -rf dist && vite build && vue-tsc -p tsconfig.build.json && cp src/theme.css dist/theme.css",
+    "build": "rm -rf dist && vite build && vue-tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "type-check": "vue-tsc --build",
     "lint": "eslint .",
     "format": "prettier --write src tests",
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "sh smoke/run.sh",
-    "format:check": "prettier --check src tests"
+    "format:check": "prettier --check src tests",
+    "docs": "vitepress dev site",
+    "docs:build": "vitepress build site"
   },
   "peerDependencies": {
     "vue": "^3.5.0"
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.11",
+    "@vuepic/vue-datepicker": "^12.1.0",
     "@vueuse/core": "^14.4.0",
-    "maska": "^3.2.2",
-    "tailwind-merge": "^3.7.0",
-    "vue-iconsax": "^2.0.0"
+    "maska": "^3.2.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
     "@tsconfig/node24": "^24.0.5",
     "@types/node": "^24.19.2",
     "@vitejs/plugin-vue": "^6.0.10",
@@ -67,9 +67,12 @@
     "eslint-plugin-vue": "~10.7.0",
     "happy-dom": "^21.0.4",
     "jiti": "^2.7.0",
+    "postcss": "^8.5.32",
     "prettier": "3.8.1",
+    "tailwindcss": "^4.3.5",
     "typescript": "~5.9.3",
     "vite": "^7.3.7",
+    "vitepress": "^1.6.4",
     "vitest": "^4.1.12",
     "vue": "^3.5.44",
     "vue-tsc": "^3.3.13"

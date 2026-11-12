@@ -3,48 +3,37 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const root = join(import.meta.dirname, '..', '..')
-const read = (path: string) => readFileSync(join(root, path), 'utf8')
-const uiFiles = readdirSync(join(root, 'src/ui'), { recursive: true, encoding: 'utf8' })
-  .filter((f) => /\.(ts|vue)$/.test(f) && f !== 'icon-names.ts')
-  .map((f) => ({ file: f, text: read(join('src/ui', f)) }))
+const templates = readdirSync(join(root, 'src/ui'), { recursive: true, encoding: 'utf8' })
+  .filter((f) => f.endsWith('.vue'))
+  .map((f) => ({
+    file: f,
+    text: readFileSync(join(root, 'src/ui', f), 'utf8').split('<script')[0]!,
+  }))
 
-describe('RTL guard (ADR-0008)', () => {
-  // Physical left/right utilities don't flip with dir="rtl"; use ms/me, ps/pe, start/end instead.
-  const physical =
-    /(?<![\w-])(?:[a-z0-9-]+:)*(?:-?(?:ml|mr|pl|pr|left|right|scroll-ml|scroll-mr)-[\w./[\]-]+|rounded-(?:[lr]|tl|tr|bl|br)(?:-[\w[\]]+)?|border-[lr](?:-[\w[\]]+)?|text-left|text-right|float-left|float-right)(?![\w-])/g
+describe('headless guard (ADR-0012, ADR-0014)', () => {
+  it('finds the components', () => {
+    expect(templates.length).toBeGreaterThan(10)
+  })
 
-  it('uses no physical direction classes in src/ui', () => {
-    const hits = uiFiles.flatMap(({ file, text }) =>
-      [...text.matchAll(physical)].map((m) => `${file}: ${m[0]}`),
+  it('renders no classes of its own: every class comes from the ui map', () => {
+    const hits = templates.flatMap(({ file, text }) =>
+      [...text.matchAll(/(?<![\w-])(:?class)="([^"]*)"/g)]
+        .filter(([, , value]) => !/^ui\.\w+$/.test(value!))
+        .map((m) => `${file}: ${m[0]}`),
     )
     expect(hits).toEqual([])
   })
-})
 
-describe('icon names', () => {
-  it('match the installed vue-iconsax (re-run scripts/gen-icon-names.mjs after upgrading)', () => {
-    const installed = readdirSync(join(root, 'node_modules/vue-iconsax/dist/components/icons'))
-      .filter((f) => f.endsWith('.vue.js'))
-      .map((f) => f.slice(0, -'.vue.js'.length))
-      .sort()
-    const typed = [...read('src/ui/icon-names.ts').matchAll(/\| '([^']+)'/g)]
-      .map((m) => m[1])
-      .sort()
-    expect(typed).toEqual(installed)
-  })
-})
-
-describe('theme.css', () => {
-  const css = read('src/theme.css')
-
-  it('defines the dark variant on [data-theme=dark] and points Tailwind at the components', () => {
-    expect(css).toContain('@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));')
-    expect(css).toContain("@source './ui';")
+  it('has no <style> blocks', () => {
+    expect(templates.filter(({ text }) => text.includes('<style')).map((f) => f.file)).toEqual([])
   })
 
-  it('defines a z-* utility for every ZIndex entry', async () => {
-    const { ZIndex } = await import('@moonlinetravel/vue-kit/ui')
-    const missing = Object.values(ZIndex).filter((cls) => !css.includes(`@utility ${cls} {`))
-    expect(missing).toEqual([])
+  it('uses inline styles only for behaviour (dropdowns, windowing, the hidden PIN input)', () => {
+    const styled = templates.filter(({ text }) => /:style=/.test(text)).map((f) => f.file)
+    expect(styled.sort()).toEqual([
+      'inputs/AppPinInput.vue',
+      'inputs/AppSelect.vue',
+      'inputs/CountryCodeSelect.vue',
+    ])
   })
 })

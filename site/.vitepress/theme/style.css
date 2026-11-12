@@ -1,0 +1,84 @@
+@import '@vuepic/vue-datepicker/dist/main.css';
+@import 'tailwindcss';
+@import '../../skin/skin.css';
+@source '../..';
+
+/*
+ * Docs branding: a blue theme, with every text / background pair at WCAG AA contrast or better.
+ * Only the docs site; the example skin (site/skin/skin.css) stays neutral for apps to copy.
+ */
+:root {
+  --vp-c-brand-1: #1d4ed8; /* links, active items: 6.7:1 on white */
+  --vp-c-brand-2: #1e40af; /* hover */
+  --vp-c-brand-3: #2563eb; /* filled buttons: white text 5.2:1 */
+  --vp-c-brand-soft: rgb(37 99 235 / 0.14);
+  --vp-button-brand-text: #ffffff;
+
+  /* The live examples in the brand colour too. */
+  --vk-accent: #2563eb;
+  --vk-accent-fg: #ffffff;
+}
+
+/* The intro (IntroScreen.vue). Landscape screens: the video fills them (its content sits in
+   the middle, so the crop is only empty ground). Tall screens: fitted, on its own ground colour. */
+.vk-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #1c1b20;
+  transition: opacity 0.3s ease;
+}
+.vk-intro video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+@media (min-aspect-ratio: 4/3) {
+  .vk-intro video {
+    object-fit: cover;
+  }
+}
+.vk-intro.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+.vk-intro-skip {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  padding: 8px 18px;
+  border: 1px solid #3f3f46;
+  border-radius: 999px;
+  background: #242429;
+  color: #e4e4e7;
+  font-size: 14px;
+  font-weight: 500;
+}
+.vk-intro-skip:hover {
+  background: #2f2f35;
+}
+.vk-intro-skip:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+.vk-intro-off .vk-intro {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vk-intro {
+    display: none;
+  }
+}
+
+/* :root.dark, to outrank the skin's own dark rule. */
+:root.dark {
+  --vp-c-brand-1: #60a5fa; /* 6.8:1 on the dark background */
+  --vp-c-brand-2: #93c5fd;
+  --vp-c-brand-3: #3b82f6; /* dark text on it: 5.4:1 */
+  --vp-c-brand-soft: rgb(59 130 246 / 0.18);
+  --vp-button-brand-text: #09090b;
+  --vp-button-brand-hover-text: #09090b;
+
+  --vk-accent: #60a5fa;
+  --vk-accent-fg: #09090b;
+}

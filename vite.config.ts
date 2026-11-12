@@ -31,7 +31,7 @@ export default defineConfig({
     include: ['tests/**/*.spec.ts'],
     // Tests use the public entry points only, resolved to source.
     alias: Object.fromEntries(
-      entries.map((name) => [`@moonlinetravel/vue-kit/${name}`, src(`${name}/index.ts`)]),
+      entries.map((name) => [`@mhaamads/vue-kit/${name}`, src(`${name}/index.ts`)]),
     ),
   },
 })

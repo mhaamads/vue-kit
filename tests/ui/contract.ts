@@ -1,73 +1,50 @@
-// The input contract harness (design doc §6). Every input's suite runs against three UIs:
-// the default skin, a minimal slot override (level 3) and a minimal plugin override (level 4).
-// A case that passes on one and fails on another means behaviour leaked into a template.
-import { defineComponent, h, type Component, type VNodeChild } from 'vue'
+// Mount helpers: each component with v-model wired, the way an app uses it.
+import type { Component } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { createVueKit, type OverridableInput } from '@moonlinetravel/vue-kit/ui'
+import {
+  AppCheckbox,
+  AppCheckboxGroup,
+  AppDateInput,
+  AppInput,
+  AppRadioGroup,
+  AppSelect,
+  AppSwitch,
+  AppTimeInput,
+} from '@mhaamads/vue-kit/ui'
 
 export type MountInput = (options?: {
   props?: Record<string, unknown>
   attrs?: Record<string, unknown>
   model?: unknown
+  global?: Record<string, unknown>
 }) => VueWrapper
 
-/**
- * @param render the minimal custom UI: it may only bind what the field API gives it.
- * Returns `[name, mountInput]` pairs for `describe.each`.
- */
-export const contractUis = (
-  component: Component,
-  key: OverridableInput,
-  render: (field: any) => VNodeChild,
-): [string, MountInput][] => {
-  const MinimalOverride = defineComponent({
-    props: { field: { type: Object, required: true } },
-    setup: (props) => () => render(props.field),
-  })
+const mountWith =
+  (component: Component): MountInput =>
+  ({ props = {}, attrs = {}, model, global } = {}) => {
+    // Inputs that settle their model during mount emit before the wrapper exists; queue those.
+    const box: { wrapper?: VueWrapper } = {}
+    const onUpdate = (value: unknown) =>
+      box.wrapper
+        ? box.wrapper.setProps({ modelValue: value })
+        : queueMicrotask(() => box.wrapper?.setProps({ modelValue: value }))
+    box.wrapper = mount(component, {
+      attachTo: document.body,
+      props: { ...props, modelValue: model, 'onUpdate:modelValue': onUpdate },
+      attrs,
+      global,
+    })
+    return box.wrapper
+  }
 
-  const mountWith =
-    (extra: Record<string, unknown>): MountInput =>
-    ({ props = {}, attrs = {}, model } = {}) => {
-      // Inputs that settle their model during mount emit before the wrapper exists; queue those.
-      const box: { wrapper?: VueWrapper } = {}
-      const onUpdate = (value: unknown) =>
-        box.wrapper
-          ? box.wrapper.setProps({ modelValue: value })
-          : queueMicrotask(() => box.wrapper?.setProps({ modelValue: value }))
-      box.wrapper = mount(component, {
-        attachTo: document.body,
-        props: { ...props, modelValue: model, 'onUpdate:modelValue': onUpdate },
-        attrs,
-        ...extra,
-      })
-      return box.wrapper
-    }
+/** For describe.each: `[name, mountInput]`. */
+export const suite = (mountInput: MountInput): [string, MountInput][] => [['default', mountInput]]
 
-  return [
-    ['default UI', mountWith({})],
-    ['slot override', mountWith({ slots: { default: (field: any) => render(field) } })],
-    [
-      'plugin override',
-      mountWith({
-        global: { plugins: [createVueKit({ components: { [key]: MinimalOverride } })] },
-      }),
-    ],
-  ]
-}
-
-/** Minimal text-input UI: bare label, control, hint and error, bound from the field API. */
-export const minimalTextInput = (f: any) =>
-  h('div', [
-    f.label ? h('label', f.labelProps, f.label) : null,
-    f.type === 'tel'
-      ? h('select', f.codeProps, [
-          h('option', { value: '+964' }, 'IQ'),
-          h('option', { value: '+1' }, 'US'),
-        ])
-      : null,
-    h(f.as, f.inputProps),
-    f.type === 'password' ? h('button', f.toggleProps, 'eye') : null,
-    f.copyable ? h('button', f.copyProps, 'copy') : null,
-    f.hint ? h('small', f.hintProps, f.hint) : null,
-    f.error ? h('span', f.errorProps, f.error) : null,
-  ])
+export const textField = mountWith(AppInput)
+export const select = mountWith(AppSelect)
+export const checkbox = mountWith(AppCheckbox)
+export const switchInput = mountWith(AppSwitch)
+export const radioGroup = mountWith(AppRadioGroup)
+export const checkboxGroup = mountWith(AppCheckboxGroup)
+export const dateField = mountWith(AppDateInput)
+export const timeField = mountWith(AppTimeInput)

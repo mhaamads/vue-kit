@@ -1,0 +1,124 @@
+/*
+ * Example skin for vue-kit (ADR-0014). Not part of the package: copy it into your app and change it.
+ *
+ *   @import 'tailwindcss';
+ *   @import './ui/skin.css';
+ *
+ * Classes live in ui.ts (passed to createVueKit({ ui })). Every colour and the font
+ * are CSS variables below; change one and every component follows:
+ * brand colour (--vk-accent), surfaces, text, font. Dark mode only
+ * swaps the variables, so components need no dark: classes.
+ */
+@source './';
+
+:root {
+  --vk-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --vk-bg: #ffffff; /* page */
+  --vk-surface: #ffffff; /* panels, popups, dialogs */
+  --vk-subtle: #f4f4f5; /* hover, chips, columns */
+  --vk-fg: #18181b; /* text */
+  --vk-muted: #71717a; /* secondary text */
+  --vk-line: #e4e4e7; /* borders */
+  --vk-accent: #4f46e5; /* brand: focus, selection, primary buttons */
+  --vk-accent-fg: #ffffff; /* text on the accent */
+  --vk-danger: #dc2626;
+  --vk-success: #16a34a;
+  --vk-warning: #d97706;
+  --vk-info: #0284c7;
+  color-scheme: light;
+}
+
+/* Dark mode: the docs (VitePress) put .dark on <html>; use whatever your app uses. */
+:root.dark,
+[data-theme='dark'] {
+  --vk-bg: #09090b;
+  --vk-surface: #18181b;
+  --vk-subtle: #27272a;
+  --vk-fg: #fafafa;
+  --vk-muted: #a1a1aa;
+  --vk-line: #3f3f46;
+  --vk-accent: #818cf8;
+  --vk-accent-fg: #09090b;
+  --vk-danger: #f87171;
+  color-scheme: dark; /* native date / time pickers and scrollbars turn dark too */
+}
+
+/* The variables as Tailwind colours: bg-vk-surface, text-vk-muted, border-vk-line, bg-vk-accent, ... */
+@theme inline {
+  --font-vk: var(--vk-font);
+  --color-vk-bg: var(--vk-bg);
+  --color-vk-surface: var(--vk-surface);
+  --color-vk-subtle: var(--vk-subtle);
+  --color-vk-fg: var(--vk-fg);
+  --color-vk-muted: var(--vk-muted);
+  --color-vk-line: var(--vk-line);
+  --color-vk-accent: var(--vk-accent);
+  --color-vk-accent-fg: var(--vk-accent-fg);
+  --color-vk-danger: var(--vk-danger);
+  --color-vk-success: var(--vk-success);
+  --color-vk-warning: var(--vk-warning);
+  --color-vk-info: var(--vk-info);
+}
+
+/* The bordered box shared by every text-like control: the control and its leading / trailing
+   items sit inside it, so icons and buttons line up without absolute positioning. */
+@utility vk-box {
+  @apply flex h-10 w-full items-center gap-2 rounded-lg border border-vk-line bg-vk-surface px-3 text-sm text-vk-fg transition-[border-color,box-shadow];
+  &:focus-within {
+    @apply border-vk-accent ring-3 ring-vk-accent/20;
+  }
+  &:has([aria-invalid='true']) {
+    @apply border-vk-danger ring-vk-danger/20;
+  }
+  &:has(:disabled) {
+    @apply cursor-not-allowed bg-vk-subtle text-vk-muted;
+  }
+}
+
+/* Button looks, used by ui.button in ui.ts. */
+@utility vk-button {
+  @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-vk-accent px-4 text-sm font-medium text-vk-accent-fg transition-colors outline-none hover:bg-vk-accent/90 focus-visible:ring-3 focus-visible:ring-vk-accent/30 data-disabled:cursor-not-allowed data-disabled:opacity-50;
+}
+@utility vk-button-outline {
+  @apply border border-vk-line bg-vk-surface text-vk-fg hover:bg-vk-subtle;
+}
+@utility vk-button-danger {
+  @apply bg-vk-danger text-white hover:bg-vk-danger/90;
+}
+
+/* The date picker's calendar (@vuepic/vue-datepicker) in the same colours, light and dark.
+   Import its CSS first: @import '@vuepic/vue-datepicker/dist/main.css'; */
+.dp__theme_light,
+.dp__theme_dark {
+  --dp-font-family: var(--vk-font);
+  --dp-background-color: var(--vk-surface);
+  --dp-text-color: var(--vk-fg);
+  --dp-hover-color: var(--vk-subtle);
+  --dp-hover-text-color: var(--vk-fg);
+  --dp-hover-icon-color: var(--vk-muted);
+  --dp-icon-color: var(--vk-muted);
+  --dp-primary-color: var(--vk-accent);
+  --dp-primary-disabled-color: color-mix(in srgb, var(--vk-accent) 50%, transparent);
+  --dp-primary-text-color: var(--vk-accent-fg);
+  --dp-secondary-color: var(--vk-muted);
+  --dp-border-color: var(--vk-line);
+  --dp-menu-border-color: var(--vk-line);
+  --dp-border-color-hover: var(--vk-muted);
+  --dp-disabled-color: var(--vk-subtle);
+  --dp-disabled-color-text: var(--vk-muted);
+  --dp-highlight-color: color-mix(in srgb, var(--vk-accent) 12%, transparent);
+  --dp-danger-color: var(--vk-danger);
+}
+
+/* Toast transitions (AppToasts uses TransitionGroup name="vk-toast"). */
+@layer components {
+  .vk-toast-enter-active,
+  .vk-toast-leave-active {
+    @apply transition duration-200;
+  }
+  .vk-toast-enter-from,
+  .vk-toast-leave-to {
+    @apply -translate-y-2 opacity-0;
+  }
+}

@@ -16,12 +16,16 @@ export type ErrorResponse = {
   [key: string]: unknown
 }
 
-/** Thrown for every failure. `status` is 0 for network errors. */
+/**
+ * Thrown for every failure. `status` is 0 when there was no answer: a network error, a
+ * `timeout` (`reason: 'timeout'`) or a request you cancelled (`reason: 'aborted'`).
+ */
 export class HttpError extends Error {
   constructor(
     public status: number,
     message: string,
     public data: ErrorResponse | null = null,
+    public reason?: 'timeout' | 'aborted',
   ) {
     super(message)
     this.name = 'HttpError'
@@ -53,10 +57,18 @@ export type RequestOptions = {
   errorMessage?: string
   /** Resource name for the default success text, e.g. "Task" → "Task created successfully." */
   label?: string
+  /**
+   * Cancels the request when aborted, e.g. an older search when a newer one starts. A cancelled
+   * request throws an HttpError with `reason: 'aborted'` and shows no toast.
+   */
+  signal?: AbortSignal
+  /** Give up after this many ms without an answer (overrides the client's `timeout`). */
+  timeout?: number
 }
 
 export const defaultHttpMessages = {
   sessionExpired: 'Your session has expired. Please log in again to continue.',
+  timeout: 'The server took too long to answer. Please try again.',
   success: (method: RequestMethod, label = 'Resource') =>
     method === 'POST'
       ? `${label} created successfully.`
@@ -82,9 +94,12 @@ export type HttpClientConfig = {
    * return nothing to throw the error as usual, or throw to replace it.
    */
   onError?: (error: HttpError, retry: () => Promise<unknown>) => unknown
+  /** Default `timeout` in ms for every request. Off unless set. */
+  timeout?: number
   /** Shows toasts. Defaults to the kit's toast queue. */
   notify?: (toast: ToastOptions) => void
-  messages?: Partial<HttpMessages>
+  /** Texts, or a function read on every request (so they can follow the app language). */
+  messages?: Partial<HttpMessages> | (() => Partial<HttpMessages>)
 }
 
 const errorText = (data: ErrorResponse | null, response: Response, m: HttpMessages) => {
@@ -107,7 +122,10 @@ const formData = (body: Record<string, unknown>) => {
 }
 
 export const createHttpClient = (config: HttpClientConfig) => {
-  const m = { ...defaultHttpMessages, ...config.messages }
+  const texts = (): HttpMessages => ({
+    ...defaultHttpMessages,
+    ...(typeof config.messages === 'function' ? config.messages() : config.messages),
+  })
   const notify = config.notify ?? useToast
   const defaultBase = Object.keys(config.baseUrls)[0]
 
@@ -144,6 +162,20 @@ export const createHttpClient = (config: HttpClientConfig) => {
             ? formData(options.body)
             : JSON.stringify(options.body)
 
+    // One controller for both ways of stopping: the caller's signal and the timeout.
+    const controller = new AbortController()
+    const stop = () => controller.abort()
+    const wait = options.timeout ?? config.timeout
+    let timedOut = false
+    const timer = wait
+      ? setTimeout(() => {
+          timedOut = true
+          stop()
+        }, wait)
+      : undefined
+    if (options.signal?.aborted) stop()
+    else options.signal?.addEventListener('abort', stop, { once: true })
+
     let response: Response
     try {
       response = await fetch(url.toString(), {
@@ -151,14 +183,20 @@ export const createHttpClient = (config: HttpClientConfig) => {
         headers,
         body,
         credentials: options.credentials ?? 'omit',
+        signal: controller.signal,
       })
     } catch (error) {
+      if (timedOut) throw new HttpError(0, texts().timeout, null, 'timeout')
+      if (options.signal?.aborted) throw new HttpError(0, 'Request cancelled', null, 'aborted')
       throw new HttpError(0, error instanceof Error ? error.message : 'Unknown error occurred')
+    } finally {
+      clearTimeout(timer)
+      options.signal?.removeEventListener('abort', stop)
     }
 
     if (!response.ok) {
       const data = (await response.json().catch(() => null)) as ErrorResponse | null
-      const text = options.errorMessage ?? errorText(data, response, m)
+      const text = options.errorMessage ?? errorText(data, response, texts())
       const error = new HttpError(
         response.status,
         Array.isArray(text) ? text.join('\n') : text,
@@ -202,7 +240,7 @@ export const createHttpClient = (config: HttpClientConfig) => {
     if (options.showSuccessToast && (options.successMessage || method !== 'GET')) {
       notify({
         type: 'success',
-        message: options.successMessage ?? m.success(method, options.label),
+        message: options.successMessage ?? texts().success(method, options.label),
         duration: 3000,
       })
     }

@@ -1,19 +1,39 @@
-// Native modal <dialog> behind AppDialog and AppDrawer: the browser provides the focus trap,
-// Escape (`cancel` event) and top-layer stacking, so no teleport or z-index is needed.
-import {
-  inject,
-  nextTick,
-  onBeforeUnmount,
-  provide,
-  ref,
-  useId,
-  watch,
-  type InjectionKey,
-  type Ref,
-} from 'vue'
+// Native modal <dialog> behind AppDialog and AppConfirmDialog: the browser provides the focus
+// trap, Escape (`cancel` event) and top-layer stacking, so no teleport or z-index is needed.
+import { nextTick, onBeforeUnmount, ref, shallowReactive, watch, type Ref } from 'vue'
 
-type OverlayContext = { titleId: string; hasTitle: Ref<boolean>; close: () => void }
-const overlayKey: InjectionKey<OverlayContext> = Symbol('vue-kit-overlay')
+// The kit's open modal dialogs, oldest first. Everything outside the top one is inert, so
+// AppToasts moves into it (see AppToasts.vue), and the page behind must not scroll.
+const openDialogs = shallowReactive<HTMLDialogElement[]>([])
+/** The topmost open kit dialog still on the page, if any (a removed one doesn't count). */
+export const getTopDialog = () => openDialogs.filter((el) => el.isConnected && el.open).at(-1)
+
+let unlockScroll: (() => void) | undefined
+const lockScroll = () => {
+  const html = document.documentElement
+  const before = { overflow: html.style.overflow, gutter: html.style.scrollbarGutter }
+  // Keep the scrollbar's space, so the page doesn't jump sideways (works in RTL too).
+  if (window.innerWidth > html.clientWidth) html.style.scrollbarGutter = 'stable'
+  html.style.overflow = 'hidden'
+  unlockScroll = () => {
+    html.style.overflow = before.overflow
+    html.style.scrollbarGutter = before.gutter
+  }
+}
+
+const opened = (el: HTMLDialogElement) => {
+  if (!openDialogs.length) lockScroll()
+  openDialogs.push(el)
+}
+const released = (el: HTMLDialogElement | undefined) => {
+  const index = el ? openDialogs.indexOf(el) : -1
+  if (index === -1) return
+  openDialogs.splice(index, 1)
+  if (!openDialogs.length) {
+    unlockScroll?.()
+    unlockScroll = undefined
+  }
+}
 
 const FOCUSABLE =
   '[autofocus], button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -23,8 +43,6 @@ export const useModalDialog = (
   options: { closeOnEscape: () => boolean; closeOnBackdrop: () => boolean },
 ) => {
   const dialog = ref<HTMLDialogElement>()
-  const hasTitle = ref(false)
-  const titleId = useId()
   let returnFocus: HTMLElement | null = null
 
   const close = () => (open.value = false)
@@ -38,12 +56,14 @@ export const useModalDialog = (
       if (isOpen && !el.open) {
         returnFocus = document.activeElement as HTMLElement | null
         el.showModal()
+        opened(el)
         // Browsers focus the first control themselves; do it explicitly so every engine agrees.
         if (!el.contains(document.activeElement)) {
           ;(el.querySelector<HTMLElement>(FOCUSABLE) ?? el).focus()
         }
       } else if (!isOpen && el.open) {
         el.close()
+        released(el)
         // Only after close(): while the modal is open, everything outside it is inert.
         returnFocus?.focus?.()
         returnFocus = null
@@ -54,9 +74,8 @@ export const useModalDialog = (
 
   onBeforeUnmount(() => {
     if (dialog.value?.open) dialog.value.close()
+    released(dialog.value)
   })
-
-  provide(overlayKey, { titleId, hasTitle, close })
 
   return {
     dialog,
@@ -71,12 +90,9 @@ export const useModalDialog = (
       },
       // Closed by the browser (e.g. a <form method="dialog">): keep v-model in sync.
       onClose: () => {
+        released(dialog.value)
         if (open.value) close()
       },
     },
-    labelledBy: () => (hasTitle.value ? titleId : undefined),
   }
 }
-
-/** For AppOverlayHeading: the surrounding dialog's title id and close function, if any. */
-export const useOverlayContext = () => inject(overlayKey, undefined)

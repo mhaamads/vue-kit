@@ -1,6 +1,6 @@
 # 0011. Runtime dependency allow-list
 
-Status: Accepted (2026-11-11). Extends ADR-0010.
+Status: Amended by ADR-0012 (2026-11-12): the allow-list is now vue, maska, @floating-ui/vue, @vueuse/core. Extends ADR-0010.
 
 ## Context
 

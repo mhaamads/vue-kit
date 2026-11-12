@@ -13,3 +13,7 @@ DevExtreme, `@vuepic/vue-datepicker`, Tiptap, `vue3-colorpicker` and `vue-easy-l
 ## Consequences
 
 Picker-only date features (inline calendar, quarter and year pickers, multi-dates, disabled dates greyed out in the popup) are dropped. A consumer that needs them brings its own picker through the override levels. A test fails the build if `src/ui` imports a package outside the allow-list.
+
+## Amendment (2026-11-12)
+
+Exception by the owner's request: `AppDateInput` uses `@vuepic/vue-datepicker` (ADR-0015).

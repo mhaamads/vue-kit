@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick, reactive } from 'vue'
 import { mount } from '@vue/test-utils'
-import { AppForm, AppInput, createVueKit } from '@moonlinetravel/vue-kit/ui'
-import { defineSchema } from '@moonlinetravel/vue-kit/utils'
+import { AppForm, AppInput, createVueKit } from '@mhaamads/vue-kit/ui'
+import { defineSchema } from '@mhaamads/vue-kit/utils'
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -15,31 +15,21 @@ const schema = defineSchema<Signup>({
   email: { required: true, isEmail: true, label: 'Email' },
 })
 
-// A consumer form: fields read their errors from AppForm's slot.
+// A consumer form: fields read their errors from Form's slot.
 const mountForm = (
   options: { kit?: Parameters<typeof createVueKit>[0]; custom?: boolean } = {},
 ) => {
   const data = reactive<Signup>({ name: '', email: '' })
   const onSubmit = vi.fn()
+  // `custom`: the label is left out.
   const field = (errors: any, key: keyof Signup) =>
-    options.custom
-      ? h(
-          AppInput,
-          {
-            id: key,
-            modelValue: data[key],
-            'onUpdate:modelValue': (v: any) => (data[key] = v),
-            errors: errors[key],
-          },
-          { default: (f: any) => h('input', f.inputProps) },
-        )
-      : h(AppInput, {
-          id: key,
-          label: key,
-          modelValue: data[key],
-          'onUpdate:modelValue': (v: any) => (data[key] = v),
-          errors: errors[key],
-        })
+    h(AppInput, {
+      id: key,
+      label: options.custom ? undefined : key,
+      modelValue: data[key],
+      'onUpdate:modelValue': (v: any) => (data[key] = v),
+      errors: errors[key],
+    })
   const App = defineComponent({
     setup: () => () =>
       h(
@@ -54,19 +44,17 @@ const mountForm = (
         },
       ),
   })
-  const wrapper = mount(App, {
-    attachTo: document.body,
-    global: { plugins: [createVueKit(options.kit)] },
-  })
+  const kit = createVueKit(options.kit)
+  const wrapper = mount(App, { attachTo: document.body, global: { plugins: [kit] } })
   const submit = async () => {
     await wrapper.find('form').trigger('submit')
     await nextTick()
     await new Promise((r) => requestAnimationFrame(r))
   }
-  return { wrapper, data, onSubmit, submit }
+  return { wrapper, data, onSubmit, submit, kit }
 }
 
-describe('AppForm', () => {
+describe('Form', () => {
   it('does not mark empty required fields invalid before the first submit', () => {
     const { wrapper } = mountForm()
     expect(wrapper.find('[aria-invalid="true"]').exists()).toBe(false)
@@ -99,12 +87,21 @@ describe('AppForm', () => {
     expect(wrapper.find('[aria-invalid="true"]').exists()).toBe(false)
   })
 
-  it('uses validation messages from the plugin', async () => {
-    const { wrapper, submit } = mountForm({
-      kit: { messages: { required: (field?: string) => `${field} پێویستە.` } },
+  it('uses the locale validation messages and re-words shown errors on a language switch', async () => {
+    const { wrapper, submit, kit } = mountForm({
+      kit: {
+        locale: 'ckb',
+        syncDocument: false,
+        locales: {
+          ckb: { dir: 'rtl', messages: { required: (field?: string) => `${field} پێویستە.` } },
+        },
+      },
     })
     await submit()
     expect(wrapper.find('#name-error').text()).toContain('Name پێویستە.')
+    kit.setLocale('en')
+    await nextTick()
+    expect(wrapper.find('#name-error').text()).toContain('Name is required.')
   })
 
   it('skips validation when devBypassValidation() returns true, with a dev warning', async () => {
@@ -115,7 +112,7 @@ describe('AppForm', () => {
     expect(warn).toHaveBeenCalledTimes(1)
   })
 
-  it('focuses the first invalid control of a fully custom UI too (no markup assumptions)', async () => {
+  it('focuses the first invalid control without a label too', async () => {
     const { submit } = mountForm({ custom: true })
     await submit()
     expect(document.activeElement?.id).toBe('name')

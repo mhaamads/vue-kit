@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      /* The docs' dark theme. Flat colours only: soft gradients band and look noisy in video. */
+      :root {
+        --ground: #1b1b1f;
+        --surface: #242429;
+        --line: #3f3f46;
+        --ink: #fafafa;
+        --muted: #a1a1aa;
+        --accent: #3b82f6;
+        --accent-ink: #60a5fa;
+        --ok: #22c55e;
+        --font: 'Inter', sans-serif;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+        font-family: var(--font);
+        color: var(--ink);
+      }
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: var(--ground);
+      }
+      #scene {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* The kit: six real components, laid out on a 1000 × 320 stage at the centre. */
+      #stage {
+        position: absolute;
+        left: 460px;
+        top: 380px;
+        width: 1000px;
+        height: 320px;
+        transform: scale(1.3);
+      }
+      .piece {
+        position: absolute;
+        border-radius: 16px;
+      }
+      .box {
+        background: var(--surface);
+        border: 2px solid var(--line);
+      }
+      #c-input {
+        left: 0;
+        top: 0;
+        width: 520px;
+        height: 84px;
+        display: flex;
+        align-items: center;
+        padding-left: 28px;
+        font-size: 34px;
+      }
+      #c-input .l {
+        display: none;
+      }
+      #caret {
+        width: 3px;
+        height: 40px;
+        margin-left: 3px;
+        border-radius: 2px;
+        background: var(--accent-ink);
+      }
+      #c-switch {
+        left: 560px;
+        top: 14px;
+        width: 104px;
+        height: 56px;
+        border-radius: 28px;
+        background: var(--line);
+      }
+      #knob {
+        position: absolute;
+        left: 6px;
+        top: 6px;
+        width: 44px;
+        height: 44px;
+        border-radius: 22px;
+        background: var(--ink);
+      }
+      #c-check {
+        left: 704px;
+        top: 14px;
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        border: 2px solid #52525b;
+      }
+      #c-check svg {
+        position: absolute;
+        inset: 0;
+      }
+      #c-button {
+        left: 800px;
+        top: 0;
+        width: 200px;
+        height: 84px;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 700;
+        color: #fff;
+      }
+      #c-chips {
+        left: 0;
+        top: 128px;
+        display: flex;
+        gap: 12px;
+      }
+      .chip {
+        height: 60px;
+        padding: 0 22px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 27px;
+      }
+      .chip i {
+        font-style: normal;
+        color: var(--muted);
+      }
+      #c-pin {
+        left: 702px;
+        top: 124px;
+        display: flex;
+        gap: 14px;
+      }
+      .cell {
+        width: 64px;
+        height: 72px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 700;
+      }
+      .cell b {
+        opacity: 0;
+      }
+      #c-toast {
+        left: 350px;
+        top: 236px;
+        width: 300px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 0 28px;
+        font-size: 30px;
+        font-weight: 700;
+      }
+      #c-toast .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 7px;
+        background: var(--ok);
+      }
+
+      /* The logo they become. */
+      #brand {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+      }
+      #word {
+        font-size: 168px;
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 1;
+      }
+      #word span {
+        color: var(--accent-ink);
+      }
+      #tagline {
+        display: flex;
+        gap: 0.28em;
+        font-size: 36px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="5.4"
+      data-fps="60"
+      data-width="1920"
+      data-height="1080"
+      data-motion-blur="on"
+    >
+      <div id="bg"></div>
+      <div id="scene" class="clip" data-start="0" data-duration="5.4" data-track-index="0">
+        <div id="stage">
+          <div id="c-input" class="piece box">
+            <span class="l">J</span><span class="l">a</span><span class="l">n</span
+            ><span class="l">e</span><span class="l">&nbsp;</span><span class="l">D</span
+            ><span class="l">o</span><span class="l">e</span><span id="caret"></span>
+          </div>
+          <div id="c-switch" class="piece"><div id="knob"></div></div>
+          <div id="c-check" class="piece">
+            <svg viewBox="0 0 56 56" fill="none">
+              <path
+                id="tick"
+                d="M16 28.5l8 8 16-17"
+                stroke="#fff"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div id="c-button" class="piece">Save</div>
+          <div id="c-chips" class="piece">
+            <div class="chip box">Inputs <i>×</i></div>
+            <div class="chip box">Dialogs <i>×</i></div>
+            <div class="chip box">Toasts <i>×</i></div>
+          </div>
+          <div id="c-pin" class="piece">
+            <div class="cell box"><b>4</b></div>
+            <div class="cell box"><b>2</b></div>
+            <div class="cell box"><b>0</b></div>
+            <div class="cell box"><b>7</b></div>
+          </div>
+          <div id="c-toast" class="piece box"><span class="dot"></span>Saved</div>
+        </div>
+
+        <div id="brand">
+          <div id="word">vue-<span>kit</span></div>
+          <div id="tagline">
+            <span class="w">Inputs,</span><span class="w">dialogs</span><span class="w">and</span
+            ><span class="w">toasts</span><span class="w">for</span><span class="w">Vue</span
+            ><span class="w">3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true })
+      // Pace: every time and duration below is in "beats"; S turns them into seconds.
+      const S = 1.45
+      const stage = document.querySelector('#stage')
+      // Each piece's offset from the stage centre: they arrive from outside it and collapse into it.
+      const offset = (el) => ({
+        x: el.offsetLeft + el.offsetWidth / 2 - stage.offsetWidth / 2,
+        y: el.offsetTop + el.offsetHeight / 2 - stage.offsetHeight / 2,
+      })
+      const pieces = ['#c-input', '#c-switch', '#c-check', '#c-button', '#c-chips', '#c-pin']
+
+      // 1. Assemble: every piece lands from further out, sharpening as it arrives.
+      pieces.forEach((sel, i) => {
+        const o = offset(document.querySelector(sel))
+        tl.fromTo(
+          sel,
+          { x: o.x * 0.35, y: o.y * 0.6 + 30, scale: 0.94, opacity: 0, filter: 'blur(10px)' },
+          {
+            x: 0,
+            y: 0,
+            scale: 1,
+            opacity: 1,
+            filter: 'blur(0px)',
+            duration: 0.6 * S,
+            ease: 'expo.out',
+          },
+          (0.05 + i * 0.06) * S,
+        )
+      })
+
+      // 2. Use them: type, toggle, tick, fill the code, press Save, get a toast.
+      gsap.utils
+        .toArray('#c-input .l')
+        .forEach((l, i) => tl.set(l, { display: 'inline' }, (0.5 + i * 0.05) * S))
+      tl.to('#knob', { x: 48, duration: 0.26 * S, ease: 'power3.inOut' }, 0.78 * S)
+      tl.to(
+        '#c-switch',
+        { backgroundColor: '#3b82f6', duration: 0.26 * S, ease: 'power2.inOut' },
+        0.78 * S,
+      )
+      tl.to(
+        '#c-check',
+        { backgroundColor: '#3b82f6', borderColor: '#3b82f6', duration: 0.16 * S },
+        0.9 * S,
+      )
+      tl.fromTo(
+        '#tick',
+        { strokeDasharray: 40, strokeDashoffset: 40 },
+        { strokeDashoffset: 0, duration: 0.22 * S, ease: 'power3.out' },
+        0.94 * S,
+      )
+      gsap.utils.toArray('#c-pin .cell').forEach((cell, i) => {
+        tl.to(cell.querySelector('b'), { opacity: 1, duration: 0.08 * S }, (0.72 + i * 0.07) * S)
+        tl.to(cell, { borderColor: '#3b82f6', duration: 0.12 * S }, (0.72 + i * 0.07) * S)
+      })
+      tl.to('#c-button', { scale: 0.94, duration: 0.08 * S, ease: 'power2.in' }, 1.12 * S)
+      tl.to('#c-button', { scale: 1, duration: 0.2 * S, ease: 'power2.out' }, 1.2 * S)
+      tl.to('#caret', { opacity: 0, duration: 0.05 * S }, 1.12 * S)
+      tl.fromTo(
+        '#c-toast',
+        { y: 36, opacity: 0, filter: 'blur(6px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.4 * S, ease: 'expo.out' },
+        1.22 * S,
+      )
+
+      // 3. Collapse: everything accelerates into the centre...
+      ;[...pieces, '#c-toast'].forEach((sel, i) => {
+        const o = offset(document.querySelector(sel))
+        tl.to(
+          sel,
+          { x: -o.x, y: -o.y, scale: 0.2, opacity: 0, duration: 0.42 * S, ease: 'power3.in' },
+          (1.75 + i * 0.015) * S,
+        )
+      })
+
+      // 4. ...and the logo comes out of it, then holds still with its line.
+      tl.fromTo(
+        '#word',
+        { scale: 0.7, opacity: 0, filter: 'blur(16px)' },
+        { scale: 1, opacity: 1, filter: 'blur(0px)', duration: 0.55 * S, ease: 'expo.out' },
+        2.08 * S,
+      )
+      gsap.utils.toArray('#tagline .w').forEach((w, i) => {
+        tl.fromTo(
+          w,
+          { opacity: 0, filter: 'blur(6px)' },
+          { opacity: 1, filter: 'blur(0px)', duration: 0.16 * S, ease: 'power2.out' },
+          (2.4 + i * 0.06) * S,
+        )
+      })
+
+      window.__timelines['main'] = tl
+      tl.seek(0)
+    </script>
+  </body>
+</html>

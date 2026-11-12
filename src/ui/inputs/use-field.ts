@@ -1,5 +1,14 @@
-// Shared state and ARIA wiring for every input (design doc §1). Components are only skins.
-import { computed, ref, toValue, useId, type MaybeRefOrGetter, type Ref } from 'vue'
+// Shared state and ARIA wiring for every input. Components and custom markup bind what it returns.
+import {
+  computed,
+  getCurrentInstance,
+  onMounted,
+  ref,
+  toValue,
+  useId,
+  type MaybeRefOrGetter,
+  type Ref,
+} from 'vue'
 
 export type UseFieldOptions<T> = {
   /** The component's defineModel() ref. */
@@ -12,6 +21,8 @@ export type UseFieldOptions<T> = {
   readonly?: MaybeRefOrGetter<boolean | undefined>
   /** Whether a hint is rendered, so aria-describedby can point at it. */
   hasHint?: MaybeRefOrGetter<boolean | undefined>
+  /** Whether a description is rendered (checkbox), so aria-describedby can point at it. */
+  hasDescription?: MaybeRefOrGetter<boolean | undefined>
   /** Extra ids the control is described by (e.g. the caller's own aria-describedby). */
   describedBy?: MaybeRefOrGetter<string | undefined>
 }
@@ -32,10 +43,29 @@ export const useField = <T>(options: UseFieldOptions<T>) => {
   const touched = ref(false)
   const dirty = computed(() => !same(options.model.value, initial.value))
 
+  // Development only: an input nobody can name is a common accessibility bug, so say so.
+  if (process.env.NODE_ENV !== 'production' && getCurrentInstance()) {
+    onMounted(() => {
+      const el = document.getElementById(id.value) as HTMLInputElement | null
+      if (!el) return
+      const named =
+        el.labels?.length ||
+        el.getAttribute('aria-label') ||
+        el.getAttribute('aria-labelledby') ||
+        el.title
+      if (!named) {
+        console.warn(
+          `[vue-kit] The field "${id.value}" has no label. Give it a \`label\` (or an aria-label) so screen readers can name it.`,
+        )
+      }
+    })
+  }
+
   const ids = computed(() => ({
     label: `${id.value}-label`,
     hint: `${id.value}-hint`,
     error: `${id.value}-error`,
+    description: `${id.value}-description`,
   }))
 
   return {
@@ -62,6 +92,15 @@ export const useField = <T>(options: UseFieldOptions<T>) => {
     labelProps: computed(() => ({ id: ids.value.label, for: id.value })),
     hintProps: computed(() => ({ id: ids.value.hint })),
     errorProps: computed(() => ({ id: ids.value.error, role: 'alert' as const })),
+    descriptionProps: computed(() => ({ id: ids.value.description })),
+    /** Styling hooks for the field's root element (ADR-0012: the kit renders no classes). */
+    dataAttrs: computed(() => ({
+      'data-field': '',
+      'data-invalid': invalid.value ? '' : undefined,
+      'data-disabled': disabled.value ? '' : undefined,
+      'data-readonly': readonly.value ? '' : undefined,
+      'data-required': required.value ? '' : undefined,
+    })),
     /** Spread onto the real control. */
     controlAria: computed(() => ({
       id: id.value,
@@ -72,6 +111,7 @@ export const useField = <T>(options: UseFieldOptions<T>) => {
       'aria-describedby':
         [
           toValue(options.describedBy),
+          toValue(options.hasDescription) && ids.value.description,
           toValue(options.hasHint) && ids.value.hint,
           invalid.value && ids.value.error,
         ]

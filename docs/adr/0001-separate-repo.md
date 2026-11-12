@@ -8,7 +8,7 @@ Shared Vue code was found in portal-iq-vue (see `docs/shared-package/01-inventor
 
 ## Decision
 
-The package lives in `MoonlineTravel/vue-kit`. portal-iq-vue is read-only reference code. Nothing in portal-iq-vue is edited, and it does not depend on vue-kit.
+The package lives in `mhaamads/vue-kit`. portal-iq-vue is read-only reference code. Nothing in portal-iq-vue is edited, and it does not depend on vue-kit.
 
 ## Consequences
 
