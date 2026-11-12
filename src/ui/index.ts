@@ -45,6 +45,8 @@ export {
   useTextInput,
   type TextInputApi,
   type TextInputField,
+  type InputMask,
   type TextInputValue,
   type UseTextInputOptions,
 } from './inputs/use-text-input'
+export { countries, type Country } from './inputs/countries'

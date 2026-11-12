@@ -91,6 +91,7 @@ type FieldApi<T> = {
 | `copyable` / `copyValue` | `boolean` / `string \| number` | — | `hasCopy` | renamed |
 | `rounded` | `'full' \| 'lg' \| 'xl'` | `'xl'` | same | default skin only |
 | `rootClass` | `string` | — | — | the wrapper's class, since `class` now goes to `<input>` |
+| `v-model:code` dial-code `<select>` | native, labels `IQ +964` | — | custom dropdown | `codeProps` binds any native select |
 | ~~`classList`~~, ~~`labelClassList`~~ | | | | removed (R4): use `class` and the `label` slot |
 
 ### Emits

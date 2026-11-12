@@ -57,7 +57,15 @@ export const contractUis = (
 export const minimalTextInput = (f: any) =>
   h('div', [
     f.label ? h('label', f.labelProps, f.label) : null,
+    f.type === 'tel'
+      ? h('select', f.codeProps, [
+          h('option', { value: '+964' }, 'IQ'),
+          h('option', { value: '+1' }, 'US'),
+        ])
+      : null,
     h(f.as, f.inputProps),
+    f.type === 'password' ? h('button', f.toggleProps, 'eye') : null,
+    f.copyable ? h('button', f.copyProps, 'copy') : null,
     f.hint ? h('small', f.hintProps, f.hint) : null,
     f.error ? h('span', f.errorProps, f.error) : null,
   ])

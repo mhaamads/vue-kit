@@ -10,6 +10,8 @@ export const defaultUiMessages = {
   dismiss: 'Dismiss',
   copy: 'Copy',
   copied: 'Copied',
+  showPassword: 'Show password',
+  countryCode: 'Country code',
   confirmTitle: 'Confirm',
   confirm: 'Confirm',
   cancel: 'Cancel',
