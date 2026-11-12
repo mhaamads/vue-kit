@@ -3,7 +3,10 @@
 Form inputs, dialogs, toasts, validation, date helpers and an HTTP client for Vue 3
 apps. Components work out of the box and ship **no CSS**: your app gives them classes, once.
 
-**Docs:** run `npm run docs` (live examples, every option). Start with _Getting started_.
+**Docs:** https://mhaamads.github.io/vue-kit/ (or `npm run docs` locally). Start with _Getting started_.
+
+**AI coding skill:** `skills/frontend-conventions` teaches Claude Code the conventions for apps built on
+the kit. Install it from GitHub: `npx skills add mhaamads/vue-kit --skill frontend-conventions`.
 
 ## Install
 

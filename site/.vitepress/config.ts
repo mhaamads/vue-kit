@@ -46,6 +46,7 @@ export default defineConfig({
           { text: 'Languages', link: '/languages' },
           { text: 'Nuxt', link: '/nuxt' },
           { text: 'HTTP client', link: '/http' },
+          { text: 'AI coding skill', link: '/skill' },
         ],
       },
       {

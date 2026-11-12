@@ -2,6 +2,11 @@
 
 All notable changes. Versions follow [SemVer](https://semver.org) (ADR-0009).
 
+## Unreleased
+
+- The `frontend-conventions` AI coding skill lives in this repo (`skills/`). Install it from GitHub
+  with `npx skills add mhaamads/vue-kit --skill frontend-conventions` (docs page _AI coding skill_).
+
 ## 0.1.0 (2026-11-12)
 
 First version.
