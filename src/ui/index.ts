@@ -51,3 +51,19 @@ export {
   type UseTextInputOptions,
 } from './inputs/use-text-input'
 export { countries, type Country } from './inputs/countries'
+export { default as AppCheckbox } from './inputs/AppCheckbox.vue'
+export { default as AppSwitch } from './inputs/AppSwitch.vue'
+export { default as AppRadioGroup } from './inputs/AppRadioGroup.vue'
+export { default as AppCheckboxGroup } from './inputs/AppCheckboxGroup.vue'
+export {
+  useChoice,
+  useChoiceGroup,
+  type ChoiceApi,
+  type ChoiceField,
+  type ChoiceGroupApi,
+  type ChoiceGroupField,
+  type ChoiceOption,
+  type ChoiceValue,
+  type UseChoiceGroupOptions,
+  type UseChoiceOptions,
+} from './inputs/use-choice'

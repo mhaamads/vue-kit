@@ -12,6 +12,8 @@ export const defaultUiMessages = {
   copied: 'Copied',
   showPassword: 'Show password',
   countryCode: 'Country code',
+  on: 'On',
+  off: 'Off',
   confirmTitle: 'Confirm',
   confirm: 'Confirm',
   cancel: 'Cancel',

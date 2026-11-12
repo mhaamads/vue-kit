@@ -50,18 +50,10 @@
       </slot>
     </div>
     <slot name="hint" v-bind="field">
-      <p v-if="field.hint" v-bind="field.hintProps" class="mt-1.5 text-xs text-body-muted">
-        {{ field.hint }}
-      </p>
+      <FieldFeedback :field="field" part="hint" />
     </slot>
     <slot name="error" v-bind="field">
-      <ul
-        v-if="field.invalid"
-        v-bind="field.errorProps"
-        class="mt-2 grid list-inside list-disc gap-0.5 text-xs text-app-error"
-      >
-        <li v-for="(message, i) in field.errors" :key="i">{{ message }}</li>
-      </ul>
+      <FieldFeedback :field="field" part="errors" />
     </slot>
   </div>
 </template>
@@ -70,6 +62,7 @@
 import { computed, normalizeClass } from 'vue'
 import { twMerge } from 'tailwind-merge'
 import AppIcon from '../AppIcon.vue'
+import FieldFeedback from './FieldFeedback.vue'
 import type { IconName } from '../icon-names'
 import type { IconType } from '../styles'
 import { countries } from './countries'

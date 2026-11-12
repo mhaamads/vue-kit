@@ -28,17 +28,19 @@ export const contractUis = (
   const mountWith =
     (extra: Record<string, unknown>): MountInput =>
     ({ props = {}, attrs = {}, model } = {}) => {
-      const wrapper: VueWrapper = mount(component, {
+      // Inputs that settle their model during mount emit before the wrapper exists; queue those.
+      const box: { wrapper?: VueWrapper } = {}
+      const onUpdate = (value: unknown) =>
+        box.wrapper
+          ? box.wrapper.setProps({ modelValue: value })
+          : queueMicrotask(() => box.wrapper?.setProps({ modelValue: value }))
+      box.wrapper = mount(component, {
         attachTo: document.body,
-        props: {
-          ...props,
-          modelValue: model,
-          'onUpdate:modelValue': (value: unknown) => wrapper.setProps({ modelValue: value }),
-        },
+        props: { ...props, modelValue: model, 'onUpdate:modelValue': onUpdate },
         attrs,
         ...extra,
       })
-      return wrapper
+      return box.wrapper
     }
 
   return [
