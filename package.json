@@ -2,7 +2,7 @@
   "name": "@mhaamads/vue-kit",
   "version": "0.1.0",
   "description": "Shared Vue 3 utilities, HTTP client and overridable inputs for Vue 3 apps",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "sideEffects": false,
   "files": [
