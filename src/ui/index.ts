@@ -88,3 +88,14 @@ export {
   type MonthValue,
   type UseDateInputOptions,
 } from './inputs/use-date-input'
+export { default as AppTimeInput } from './inputs/AppTimeInput.vue'
+export {
+  useTimeInput,
+  type TimeColumnKind,
+  type TimeInputApi,
+  type TimeInputField,
+  type TimeOption,
+  type TimePreset,
+  type TimeValue,
+  type UseTimeInputOptions,
+} from './inputs/use-time-input'
