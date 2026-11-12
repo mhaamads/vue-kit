@@ -76,3 +76,15 @@ export {
   type SelectOption,
   type UseSelectOptions,
 } from './inputs/use-select'
+export { default as AppDateInput } from './inputs/AppDateInput.vue'
+export {
+  toDate,
+  useDateInput,
+  type DateInputApi,
+  type DateInputField,
+  type DateInputValue,
+  type DateLike,
+  type DateMode,
+  type MonthValue,
+  type UseDateInputOptions,
+} from './inputs/use-date-input'
