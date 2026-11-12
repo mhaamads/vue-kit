@@ -67,3 +67,12 @@ export {
   type UseChoiceGroupOptions,
   type UseChoiceOptions,
 } from './inputs/use-choice'
+export { default as AppSelect } from './inputs/AppSelect.vue'
+export { default as AppSelectSkin } from './inputs/AppSelectSkin.vue'
+export {
+  useSelect,
+  type SelectApi,
+  type SelectField,
+  type SelectOption,
+  type UseSelectOptions,
+} from './inputs/use-select'
